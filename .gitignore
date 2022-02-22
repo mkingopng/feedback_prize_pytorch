@@ -169,3 +169,4 @@ wandb_creds.py
 /longformer-base-4096-non-standard/vocab.json
 /.idea/vcs.xml
 /longformer-base-4096-non-standard/training_args.bin
+/checkpoints/
