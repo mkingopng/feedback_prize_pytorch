@@ -10,7 +10,7 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer
 class Config:
     EXPERIMENT_NAME = 'feedback_prize_exp_52-2'  # increment for each experiment
     MODEL_SAVENAME = f'longformer_{EXPERIMENT_NAME}'  # I've read bigbird gives 1-3% better performance. Consider.
-    MODEL_NAME = 'longformer-base-4096'
+    MODEL_NAME = 'longformer-large-4096'
     DATA_DIR = 'data'
     TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
     FOLDS_DF = pd.read_csv('5_train_folds.csv')  # should be fixed now
