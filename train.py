@@ -9,9 +9,30 @@ from wandb_creds import *
 
 warnings.filterwarnings("ignore")
 
+hyperparameter_defaults = dict(
+    number_of_epochs=HyperParameters.N_EPOCH,
+    number_of_folds=HyperParameters.N_FOLDS,
+    verbose_steps=HyperParameters.verbose_steps,
+    random_seed=HyperParameters.RANDOM_SEED,
+    max_length=HyperParameters.MAX_LENGTH,
+    batch_size=HyperParameters.BATCH_SIZE,
+    learning_rate=HyperParameters.LR,
+    number_of_labels=HyperParameters.NUM_LABELS,
+    hidden_dropout_probability=HyperParameters.HIDDEN_DROPOUT_PROB,
+    accumulation_steps=HyperParameters.ACCUMULATION_STEPS,
+    delta=HyperParameters.DELTA,
+    patience=HyperParameters.PATIENCE
+)
+
+config_dictionary = dict(
+    yaml='config.yaml',
+    params=hyperparameter_defaults
+)
+
 if __name__ == "__main__":
     wandb.login(key=API_KEY)
-    wandb.init()
+    # wandb.init(entity=ENTITY, project=PROJECT, tags=TAGS, save_code=SAVE_CODE, config=config_dictionary)
+    wandb.init(config=config_dictionary)
 
     split(Parameters.TRAIN_DF)
 

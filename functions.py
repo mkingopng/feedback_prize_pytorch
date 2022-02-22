@@ -399,9 +399,9 @@ class FeedbackDataset:
     def __getitem__(self, idx):
         input_ids = self.samples[idx]["input_ids"]
         input_labels = self.samples[idx]["input_labels"]
-        input_labels = [target_id_map[x] for x in input_labels]
-        other_label_id = target_id_map["O"]
-        padding_label_id = target_id_map["PAD"]
+        input_labels = [Targets.target_id_map[x] for x in input_labels]
+        other_label_id = Targets.target_id_map["O"]
+        padding_label_id = Targets.target_id_map["PAD"]
 
         # add start token id to the input_ids
         input_ids = [self.tokenizer.cls_token_id] + input_ids
@@ -458,7 +458,7 @@ class FeedbackModel(tez.Model):
             }
         )
         self.transformer = AutoModel.from_pretrained(model_name, config=config)
-        self.dropout = nn.Dropout(config.HIDDEN_DROPOUT_PROB)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.dropout1 = nn.Dropout(0.1)
         self.dropout2 = nn.Dropout(0.2)
         self.dropout3 = nn.Dropout(0.3)

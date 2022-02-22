@@ -32,7 +32,7 @@ class HyperParameters:
     RANDOM_SEED = 42
     MAX_LENGTH = 1024  # 4096 is max model. Some points it specifies 4096, others 1024
     BATCH_SIZE = 8  # 51-0 indicated that batch size 1 was too small.
-    LR = 3e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
+    LR = 5e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
     NUM_LABELS = 15
     NUM_JOBS = 12
     LABEL_SUBTOKENS = True
