@@ -151,3 +151,21 @@ dmypy.json
 /tez/
 /scratch/
 
+/longformer/
+wandb_creds.py
+/.idea/misc.xml
+/longformer-base-4096-non-standard/config.json
+/.idea/feedback_prize_pytorch.iml
+/longformer-base-4096-non-standard/merges.txt
+/.idea/modules.xml
+/.idea/other.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/longformer-base-4096-non-standard/pytorch_model.bin
+/longformer-base-4096-non-standard/special_tokens_map.json
+/longformer-base-4096-non-standard/tokenizer.json
+/longformer-base-4096-non-standard/tokenizer_config.json
+/longformer-base-4096-non-standard/train_NER.csv
+/.idea/inspectionProfiles/Project_Default.xml
+/longformer-base-4096-non-standard/vocab.json
+/.idea/vcs.xml
+/longformer-base-4096-non-standard/training_args.bin

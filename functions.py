@@ -32,11 +32,11 @@ def split(df):
     :param df: the training data to be split
     :return: multilabel stratified Kfolds
     """
-    df = Config.TRAIN_DF
+    df = Parameters.TRAIN_DF
     dfx = pd.get_dummies(df, columns=["discourse_type"]).groupby(["id"], as_index=False).sum()  #
     cols = [c for c in dfx.columns if c.startswith("discourse_type_") or c == "id" and c != "discourse_type_num"]
     dfx = dfx[cols]
-    mskf = MultilabelStratifiedKFold(n_splits=Config.N_FOLDS, shuffle=True, random_state=42)  #
+    mskf = MultilabelStratifiedKFold(n_splits=HyperParameters.N_FOLDS, shuffle=True, random_state=42)  #
     labels = [c for c in dfx.columns if c != "id"]
     dfx_labels = dfx[labels]  #
     dfx["kfold"] = -1  #
@@ -45,7 +45,7 @@ def split(df):
         dfx.loc[val_, "kfold"] = fold  #
     df = df.merge(dfx[["id", "kfold"]], on="id", how="left")  #
     print(df.kfold.value_counts())  #
-    df.to_csv(f"{Config.N_FOLDS}_train_folds.csv", index=False)  #
+    df.to_csv(f"{HyperParameters.N_FOLDS}_train_folds.csv", index=False)  #
     return df
 
 
@@ -258,30 +258,12 @@ class EarlyStopping(Callback):
                 final_scores.append(pred_scr.tolist())
 
         for j in range(len(self.valid_samples)):
-            tt = [id_target_map[p] for p in final_preds[j][1:]]
+            tt = [Targets.id_target_map[p] for p in final_preds[j][1:]]
             tt_score = final_scores[j][1:]
             self.valid_samples[j]["preds"] = tt
             self.valid_samples[j]["pred_scores"] = tt_score
 
         submission = []
-        min_thresh = {
-            "Lead": 9,
-            "Position": 5,
-            "Evidence": 14,
-            "Claim": 3,
-            "Concluding Statement": 11,
-            "Counterclaim": 6,
-            "Rebuttal": 4,
-        }
-        proba_thresh = {
-            "Lead": 0.7,
-            "Position": 0.55,
-            "Evidence": 0.65,
-            "Claim": 0.55,
-            "Concluding Statement": 0.7,
-            "Counterclaim": 0.5,
-            "Rebuttal": 0.55,
-        }
 
         for _, sample in enumerate(self.valid_samples):
             preds = sample["preds"]
@@ -327,7 +309,7 @@ class EarlyStopping(Callback):
                 word_end = min(word_end, len(sample_text.split()))
                 ps = " ".join([str(x) for x in range(word_start, word_end)])
                 if label != "O":
-                    if sum(phrase_scores) / len(phrase_scores) >= proba_thresh[label]:
+                    if sum(phrase_scores) / len(phrase_scores) >= Targets.proba_thresh[label]:
                         temp_df.append((sample_id, label, ps))
 
             temp_df = pd.DataFrame(temp_df, columns=["id", "class", "predictionstring"])
@@ -339,7 +321,7 @@ class EarlyStopping(Callback):
 
         def threshold(df):
             df = df.copy()
-            for key, value in min_thresh.items():
+            for key, value in Targets.min_thresh.items():
                 index = df.loc[df["class"] == key].query(f"len<{value}").index
                 df.drop(index, inplace=True)
             return df
@@ -391,16 +373,16 @@ def seed_everything(seed: int):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fold", type=int, default=Config.FOLD, required=False)
-    parser.add_argument("--model", type=str, default=Config.MODEL_NAME, required=False)
-    parser.add_argument("--lr", type=float, default=Config.LR, required=False)
-    parser.add_argument("--output", type=str, default=Config.OUTPUT_DIR, required=False)
-    parser.add_argument("--input", type=str, default=Config.DATA_DIR, required=False)
-    parser.add_argument("--max_len", type=int, default=Config.MAX_LENGTH, required=False)
-    parser.add_argument("--batch_size", type=int, default=Config.BATCH_SIZE, required=False)
-    parser.add_argument("--valid_batch_size", type=int, default=Config.BATCH_SIZE, required=False)
-    parser.add_argument("--epochs", type=int, default=Config.N_EPOCH, required=False)
-    parser.add_argument("--accumulation_steps", type=int, default=1, required=False)
+    parser.add_argument("--fold", type=int, default=HyperParameters.FOLD, required=False)
+    parser.add_argument("--model", type=str, default=Parameters.MODEL_NAME, required=False)
+    parser.add_argument("--lr", type=float, default=HyperParameters.LR, required=False)
+    parser.add_argument("--output", type=str, default=Parameters.OUTPUT_DIR, required=False)
+    parser.add_argument("--input", type=str, default=Parameters.DATA_DIR, required=False)
+    parser.add_argument("--max_len", type=int, default=HyperParameters.MAX_LENGTH, required=False)
+    parser.add_argument("--batch_size", type=int, default=HyperParameters.BATCH_SIZE, required=False)
+    parser.add_argument("--valid_batch_size", type=int, default=HyperParameters.BATCH_SIZE, required=False)
+    parser.add_argument("--epochs", type=int, default=HyperParameters.N_EPOCH, required=False)
+    parser.add_argument("--accumulation_steps", type=int, default=HyperParameters.ACCUMULATION_STEPS, required=False)
     return parser.parse_args()
 
 
@@ -476,7 +458,7 @@ class FeedbackModel(tez.Model):
             }
         )
         self.transformer = AutoModel.from_pretrained(model_name, config=config)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(config.HIDDEN_DROPOUT_PROB)
         self.dropout1 = nn.Dropout(0.1)
         self.dropout2 = nn.Dropout(0.2)
         self.dropout3 = nn.Dropout(0.3)

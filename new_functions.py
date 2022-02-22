@@ -514,7 +514,7 @@ class FeedbackModel(tez.Model):
             }
         )
         self.transformer = AutoModel.from_pretrained(model_name, config=config)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(config.HIDDEN_DROPOUT_PROB)
         self.dropout1 = nn.Dropout(0.1)
         self.dropout2 = nn.Dropout(0.2)
         self.dropout3 = nn.Dropout(0.3)
