@@ -1,0 +1,30 @@
+program: exp_52_train
+method: bayes
+metric:
+  goal: maximize
+  name: f1
+parameters:
+  dropout:
+    values: []
+  hidden_layer_size:
+    values: []
+  learn_rate:
+    values: [2e-5, 3e-5, 5e-5]
+  decay:
+    values: []
+  epochs:
+    value: 20
+  early_terminate:
+    type:
+    s: 5
+    eta:
+    max_iter:
+
+
+
+
+
+
+
+
+

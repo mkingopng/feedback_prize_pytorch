@@ -127,3 +127,27 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/Abishek's original 2 longformers are better than 1/
+/data/
+/fblongformerlarge1536/
+/feedback_prize_sage_deluge/
+/feedback_prize_valiant_elevator/
+/feedback_prize_visionary_cherry/
+/longformer-base-4096/
+/longformer-base-4096-finetuned-ner/
+/longformer-large-4096/
+/output/
+
+/output_csvs/
+/research/
+/research_notebooks/
+/seqclassifiers/
+/5_train_folds.csv
+/whitespace/
+/wandb/
+/vectors/
+/tez-fb-large/
+/shortformer with chunks/
+/tez/
+/scratch/
+
