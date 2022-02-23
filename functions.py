@@ -8,6 +8,7 @@ from tqdm import tqdm
 import argparse
 import random
 import warnings
+from ast import literal_eval
 
 import tez
 from tez import enums
@@ -47,6 +48,45 @@ def split(df):
     print(df.kfold.value_counts())  #
     df.to_csv(f"{HyperParameters.N_FOLDS}_train_folds.csv", index=False)  #
     return df
+
+#
+# def train_text_dataframe():
+#     """
+#     # https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
+#     :return:
+#     """
+#     test_names, train_texts = [], []
+#     for f in tqdm(list(os.listdir('data/train'))):
+#         test_names.append(f.replace('.txt', ''))
+#         train_texts.append(open('data/train/' + f, 'r').read())
+#     train_text_df = pd.DataFrame({'id': test_names, 'text': train_texts})
+#     return train_text_df
+#
+#
+# def NER_labels(train_text_df):
+#     """
+#     Chris Deotte https://www.kaggle.com/michaelkingston/pytorch-bigbird-ner-cv-0-615
+#     :return:
+#     """
+#     if not Parameters.LOAD_TOKENS_FROM:
+#         all_entities = []
+#         for ii, i in enumerate(train_text_df.iterrows()):
+#             if ii % 100 == 0: print(ii, ', ', end='')
+#             total = i[1]['text'].split().__len__()
+#             entities = ["O"] * total
+#             for j in Parameters.TRAIN_DF[Parameters.TRAIN_DF['id'] == i[1]['id']].iterrows():
+#                 discourse = j[1]['discourse_type']
+#                 list_ix = [int(x) for x in j[1]['predictionstring'].split(' ')]
+#                 entities[list_ix[0]] = f"B-{discourse}"
+#                 for k in list_ix[1:]: entities[k] = f"I-{discourse}"
+#             all_entities.append(entities)
+#         train_text_df['entities'] = all_entities
+#         train_text_df.to_csv('train_NER.csv', index=False)
+#
+#     else:
+#         train_text_df = pd.read_csv(f'{Parameters.LOAD_TOKENS_FROM}/train_NER.csv')
+#         # pandas saves lists as string, we must convert back
+#         train_text_df.entities = train_text_df.entities.apply(lambda x: literal_eval(x))
 
 
 def _prepare_training_data_helper(args, tokenizer, df, train_ids):
@@ -116,7 +156,8 @@ def prepare_training_data(df, tokenizer, args, num_jobs):
 def calc_overlap(row):
     """
     Calculates the overlap between prediction and ground truth and overlap percentages used for determining true
-    positives.
+    positives. This code is from Rob Mulla's @robikscube notebook,
+    https://www.kaggle.com/robikscube/student-writing-competition-twitch
     :param row:
     :return:
     """
@@ -167,18 +208,19 @@ def score_feedback_comp_micro(pred_df, gt_df):
     unmatched_gt_ids = [c for c in joined["gt_id"].unique() if c not in matched_gt_ids]
 
     # Get numbers of each type
-    TP = len(tp_pred_ids)
-    FP = len(fp_pred_ids)
-    FN = len(unmatched_gt_ids)
+    tp = len(tp_pred_ids)
+    fp = len(fp_pred_ids)
+    fn = len(unmatched_gt_ids)
 
     # calc micro f1
-    my_f1_score = TP / (TP + 0.5 * (FP + FN))
+    my_f1_score = tp / (tp + 0.5 * (fp + fn))
     return my_f1_score
 
 
 def score_feedback_comp(pred_df, gt_df, return_class_scores=False):
     """
-
+    A function that scores for the kaggle Student Writing Competition. Uses the steps in the evaluation page here:
+    https://www.kaggle.com/c/feedback-prize-2021/overview/evaluation
     :param pred_df:
     :param gt_df:
     :param return_class_scores:
@@ -370,7 +412,7 @@ class EarlyStopping(Callback):
 
         scr = score_feedback_comp(submission, self.valid_df, return_class_scores=True)
         print(scr)
-        model.train()  # error here?
+        model.train()
 
         epoch_score = scr[0]
         if self.mode == "min":
@@ -390,6 +432,12 @@ class EarlyStopping(Callback):
             self.best_score = score
             self.save_checkpoint(epoch_score, model)
             self.counter = 0
+            data = score
+            score_df = pd.DataFrame(columns='score')
+            if not score_df.empty:  # this is just a thought for now. want to record the best score for each fold
+                pd.append({'score': data}, ignore_index=False)
+            else:
+                pd.append({'score': data}, ignore_index=False)
 
     def save_checkpoint(self, epoch_score, model):
         if epoch_score not in [-np.inf, np.inf, -np.nan, np.nan]:
@@ -709,7 +757,7 @@ def jn(pst, start, end):
 
 def link_evidence(oof):
     """
-    for inference
+    for inference. This is from gezi's code
     :param oof:
     :return:
     """
@@ -734,14 +782,11 @@ def link_evidence(oof):
                 for i in range(2, len(pst)):
                     cur = pst[i]
                     end = i
-                    # if pst[start] == 205:
-                    #   print(cur, pst[start], cur - pst[start])
                     if (cur == -1 and c != 'Evidence') or ((cur == -1) and (
                             (pst[i + 1] > pst[end - 1] + thresh) or (pst[i + 1] - pst[start] > thresh2))):
                         retval.append((idv, c, jn(pst, start, end)))
                         start = i + 1
                 v = (idv, c, jn(pst, start, end + 1))
-                # print(v)
                 retval.append(v)
         roof = pd.DataFrame(retval, columns=['id', 'class', 'predictionstring'])
         roof = roof.merge(neoof, how='outer')

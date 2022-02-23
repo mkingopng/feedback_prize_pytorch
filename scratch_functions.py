@@ -69,6 +69,30 @@ def split(df):
     return df
 
 
+def NER_labels(train_text_df):
+    # convert train text to NER labels
+    if not Config.LOAD_TOKENS_FROM:
+        all_entities = []
+        for ii, i in enumerate(train_text_df.iterrows()):
+            if ii % 100 == 0:
+                print(ii, ', ', end='')
+            total = i[1]['text'].split().__len__()
+            entities = ["O"] * total
+            for j in Parameters.TRAIN_DF[Parameters.TRAIN_DF['id'] == i[1]['id']].iterrows():
+                discourse = j[1]['discourse_type']
+                list_ix = [int(x) for x in j[1]['predictionstring'].split(' ')]
+                entities[list_ix[0]] = f"B-{discourse}"
+                for k in list_ix[1:]:
+                    entities[k] = f"I-{discourse}"
+            all_entities.append(entities)
+        train_text_df['entities'] = all_entities
+        train_text_df.to_csv('train_NER.csv', index=False)
+
+    else:
+        train_text_df = pd.read_csv(f'{Config.LOAD_TOKENS_FROM}/train_NER.csv')
+        # pandas saves lists as string, we must convert back
+        train_text_df.entities = train_text_df.entities.apply(lambda x: literal_eval(x))
+
 def _prepare_training_data_helper(args, tokenizer, df, train_ids):
     training_samples = []
     for idx in tqdm(train_ids):

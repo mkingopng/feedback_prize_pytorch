@@ -28,14 +28,14 @@ I have a better change of optimizing it.
 So in summary, OFI's are:
 1) refactor to pytorch/transformers, get rid of tez. Keep in mind that transformers is built around distributed compute.
 2) chose the right model -> longformer-base, longformer-large, bigbird.
-3) NER
-4) spelling, punctuation & grammar
+3) named entity recognition (NER) -> NER_train.csv
+4) spelling, punctuation & grammar (SPG) -> clean_word_dict.csv
 5) post-processing -> probability_thresholds etc.
 6) ensemble -> can i use GBDT to enhance?
-7) choose the right max_char, LR and other hyperparameters
+7) tuning: choose the right max_char, LR and other hyperparameters
 8) print CV for the whole training run at the end, rather than manually calculating the average
 9) how can I schedule this training program to start a new training run at completion of the current? keep rolling... Notionally I can 
-complete 2-3 runs per day if I do this. Is it as simple as nesting it in another for loop?
+complete 2-3 runs per day if I do this. Is it as simple as nesting it in another for loop? More iterations means more choices.
 
 # NB: I ran inference on my own checkpoint files and  got a surprisingly good result: 0.666. 
 This is surprising as it's higher than the average for either of the checkpoints I used 
@@ -47,4 +47,7 @@ but the integration with tez is an issue. I doubt this will be possible until th
 Most people are using longformer-large-4096. I can't get it to deliver average f1 superior to longformer base yet. I
 wonder why.
 
-https://github.com/allenai/longforme
+Original models can be found at:
+- https://github.com/allenai/longformer
+- https://huggingface.co/allenai/longformer-base-4096/tree/main
+- https://huggingface.co/allenai/longformer-large-4096/tree/main

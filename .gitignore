@@ -174,3 +174,5 @@ wandb_creds.py
 /longformer-base-4096-original/
 /longformer-large-4096-from-kaggle/
 /longformer-large-4096-original/
+/longformer-base-4096-hf/
+/longformer-large-4096-hf/

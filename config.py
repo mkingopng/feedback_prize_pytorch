@@ -7,10 +7,13 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 
 class Parameters:
-    EXPERIMENT_NAME = 'feedback_prize_exp_52-0'  # increment for each experiment
+    ITERATION = 0
+    VER = 0
+    EXPERIMENT_NAME = f'feedback_prize_exp_{VER}'  # increment for each experiment
     MODEL_SAVENAME = f'longformer_{EXPERIMENT_NAME}'  # I've read bigbird gives 1-3% better performance. Consider.
     MODEL_NAME = 'longformer'  # this is longformer-base-4096
     DATA_DIR = 'data'
+    LOAD_TOKENS_FROM = 'longformer'
     TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
     FOLDS_DF = pd.read_csv('5_train_folds.csv')
     pre_data_dir = os.path.join('preprocessed')  # what is this used for? Can't find it in the code. delete?
@@ -28,17 +31,17 @@ class HyperParameters:
     FOLD = 0  # the fold you want to train
     N_EPOCH = 20  # following Abishek's code. seems too high. I guess it doesn't matter because of early stopping
     N_FOLDS = 5  # maybe not much benefit to going beyond 5
-    verbose_steps = 500  # what does this do?
+    VERBOSE_STEPS = 500  # what does this do?
     RANDOM_SEED = 42
-    MAX_LENGTH = 1024  # 4096 is max model. Some points it specifies 4096, others 1024
-    BATCH_SIZE = 8  # 51-0 indicated that batch size 1 was too small.
+    MAX_LENGTH = 1024  # 4096 is model max. Some points it specifies 4096, others 1024.
+    BATCH_SIZE = 8  # 1 -8 depending on model and max_length
     LR = 5e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
     NUM_LABELS = 15
     NUM_JOBS = 12
     LABEL_SUBTOKENS = True
     OUTPUT_HIDDEN_STATES = True
     HIDDEN_DROPOUT_PROB = 0.1
-    LAYER_NORM_EPS = 1e-7  # eps is the epsilon parameter, a very small number to prevent any division by zero. default is 1e-8
+    LAYER_NORM_EPS = 1e-7  # try 1e-8
     ADD_POOLING_LAYER = False
     ACCUMULATION_STEPS = 1
     DELTA = 0.001
