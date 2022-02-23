@@ -1,44 +1,41 @@
 """
-what can i poach from earlier work?
+https://www.kaggle.com/cdeotte/pytorch-bigbird-ner-cv-0-615
 
-starting with chris deottes earaly notebook on longformer. Interesting that even without close examination, there is a
-lot of similar code to abishek's. clearly I'm not the only one borrowing code. Its obviously standard practice among the
-GMs.
-
-The nice part is that this is base pytorch and doesn't use tez. Good place to start the new branch
+this seems like a good place ot restart. He's using an NER.csv to augment
 """
+# imports
 import os
-from torch import cuda
-from transformers import AutoTokenizer, AutoConfig, AutoModelForTokenClassification
 import numpy as np
 import pandas as pd
 import gc
 from tqdm import tqdm
-
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-from torch.utils.data import Dataset, DataLoader
-import torch
 from sklearn.metrics import accuracy_score
-from ast import literal_eval
+
+from transformers import *
+from transformers import AutoTokenizer, AutoModelForTokenClassification
+
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torch import cuda
 
 # declare how many gpus you wish to use. kaggle only has 1, but offline, you can use more
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # 0,1,2,3 for four gpu
 
 # version for saving model weights
-VER = 1
+VER = 26
 
 # if variable is none, then notebook computes tokens otherwise notebook loads tokens from path
-LOAD_TOKENS_FROM = "longformer-large-4096"
+LOAD_TOKENS_FROM = 'py-bigbird-v26'
 
 # if variable is none, then notebook trains a new model otherwise it loads your previously trained model
-LOAD_MODEL_FROM = "longformer-large-4096"
+LOAD_MODEL_FROM = 'py-bigbird-v26'
 
-# if following is none, then notebook uses internet and downloads huggingface  config, tokenizer, and model
-DOWNLOADED_MODEL_PATH = "longformer-large-4096"
+# if following is none, then notebook uses internet and downloads huggingface config, tokenizer, and model
+DOWNLOADED_MODEL_PATH = 'py-bigbird-v26'
 
 if DOWNLOADED_MODEL_PATH is None:
-    DOWNLOADED_MODEL_PATH = "longformer-large-4096"
-MODEL_NAME = "longformer-large-4096"
+    DOWNLOADED_MODEL_PATH = 'model'
+MODEL_NAME = 'google/bigbird-roberta-base'
 
 config = {'model_name': MODEL_NAME,
           'max_length': 1024,
@@ -49,27 +46,27 @@ config = {'model_name': MODEL_NAME,
           'max_grad_norm': 10,
           'device': 'cuda' if cuda.is_available() else 'cpu'}
 
-# this will compute val score during commit but not during submit
+# THIS WILL COMPUTE VAL SCORE DURING COMMIT BUT NOT DURING SUBMIT
 COMPUTE_VAL_SCORE = True
 if len(os.listdir('data/test')) > 5:
     COMPUTE_VAL_SCORE = False
 
-if DOWNLOADED_MODEL_PATH == 'longformer-large-4096':
-    os.mkdir('longformer-large-4096')
+if DOWNLOADED_MODEL_PATH == 'model':
+    os.mkdir('model')
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, add_prefix_space=True)
-    tokenizer.save_pretrained('longformer-large-4096')
+    tokenizer.save_pretrained('model')
 
     config_model = AutoConfig.from_pretrained(MODEL_NAME)
     config_model.num_labels = 15
-    config_model.save_pretrained('longformer-large-4096')
+    config_model.save_pretrained('model')
 
     backbone = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, config=config_model)
-    backbone.save_pretrained('longformer-large-4096')
+    backbone.save_pretrained('model')
 
 train_df = pd.read_csv('data/train.csv')
 print(train_df.shape)
-print(train_df.head())
+train_df.head()
 
 # https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
 test_names, test_texts = [], []
@@ -77,7 +74,7 @@ for f in list(os.listdir('data/test')):
     test_names.append(f.replace('.txt', ''))
     test_texts.append(open('data/test/' + f, 'r').read())
 test_texts = pd.DataFrame({'id': test_names, 'text': test_texts})
-print(test_texts.head())
+test_texts.head()
 
 # https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
 test_names, train_texts = [], []
@@ -85,27 +82,26 @@ for f in tqdm(list(os.listdir('data/train'))):
     test_names.append(f.replace('.txt', ''))
     train_texts.append(open('data/train/' + f, 'r').read())
 train_text_df = pd.DataFrame({'id': test_names, 'text': train_texts})
-print(train_text_df.head())
+train_text_df.head()
 
-# convert train text to NER labels
 if not LOAD_TOKENS_FROM:
     all_entities = []
     for ii, i in enumerate(train_text_df.iterrows()):
-        if ii % 100 == 0:
-            print(ii, ', ', end='')
+        if ii % 100 == 0: print(ii, ', ', end='')
         total = i[1]['text'].split().__len__()
         entities = ["O"] * total
         for j in train_df[train_df['id'] == i[1]['id']].iterrows():
             discourse = j[1]['discourse_type']
             list_ix = [int(x) for x in j[1]['predictionstring'].split(' ')]
             entities[list_ix[0]] = f"B-{discourse}"
-            for k in list_ix[1:]:
-                entities[k] = f"I-{discourse}"
+            for k in list_ix[1:]: entities[k] = f"I-{discourse}"
         all_entities.append(entities)
     train_text_df['entities'] = all_entities
     train_text_df.to_csv('train_NER.csv', index=False)
 
 else:
+    from ast import literal_eval
+
     train_text_df = pd.read_csv(f'{LOAD_TOKENS_FROM}/train_NER.csv')
     # pandas saves lists as string, we must convert back
     train_text_df.entities = train_text_df.entities.apply(lambda x: literal_eval(x))
@@ -113,38 +109,21 @@ else:
 print(train_text_df.shape)
 train_text_df.head()
 
-# create dictionaries that we can use during train and infer
+# create dictionaries that we can use during train and infer # mk: these are the entities
 output_labels = ['O', 'B-Lead', 'I-Lead', 'B-Position', 'I-Position', 'B-Claim', 'I-Claim', 'B-Counterclaim',
                  'I-Counterclaim', 'B-Rebuttal', 'I-Rebuttal', 'B-Evidence', 'I-Evidence', 'B-Concluding Statement',
                  'I-Concluding Statement']
 
 labels_to_ids = {v: k for k, v in enumerate(output_labels)}
 ids_to_labels = {k: v for k, v in enumerate(output_labels)}
+
 print(labels_to_ids)
 
-# Define the dataset function
-# Below is our PyTorch dataset function. It always outputs tokens and attention. During training it also provides
-# labels. And during inference it also provides word ids to help convert token predictions into word predictions.
-
-# Note that we use `text.split()` and `is_split_into_words=True` when we convert train text to labeled train tokens.
-# This is how the HugglingFace tutorial does it. However, this removes characters like `\n` new paragraph. If you want
-# your model to see new paragraphs, then we need to map words to tokens ourselves using `return_offsets_mapping=True`.
-# See my TensorFlow notebook [here][1] for an example.
-
-# Some of the following code comes from the example at HuggingFace [here][2]. However I think the code at that link is
-# wrong. The HuggingFace original code is [here][3]. With the flag `LABEL_ALL` we can either label just the first
-# subword token (when one word has more than one subword token). Or we can label all the subword tokens (with the
-# word's label). In this notebook version, we label all the tokens. There is a Kaggle discussion [here][4]
-
-# [1]: https://www.kaggle.com/cdeotte/tensorflow-longformer-ner-cv-0-617
-# [2]: https://huggingface.co/docs/transformers/custom_datasets#tok_ner
-# [3]: https://github.com/huggingface/transformers/blob/86b40073e9aee6959c8c85fcba89e47b432c4f4d/examples/pytorch/token-classification/run_ner.py#L371
-# [4]: https://www.kaggle.com/c/feedback-prize-2021/discussion/296713
-
+# define the dataset function
 LABEL_ALL_SUBTOKENS = True
 
 
-class dataset(Dataset):
+class Dataset(Dataset):
     def __init__(self, dataframe, tokenizer, max_len, get_wids):
         self.len = len(dataframe)
         self.data = dataframe
@@ -195,11 +174,7 @@ class dataset(Dataset):
         return self.len
 
 
-# Create Train and Validation Dataloaders
-# We will use the same train and validation subsets as my TensorFlow notebook [here][1]. Then we can compare results.
-# And/or experiment with ensembling the validation fold predictions.
-# [1]: https://www.kaggle.com/cdeotte/tensorflow-longformer-ner-cv-0-617
-
+# create train and validation data loaders
 # choose validation indexes (that match my TF notebook)
 IDS = train_df.id.unique()
 print('There are', len(IDS), 'train texts. We will split 90% 10% for validation.')
@@ -211,7 +186,7 @@ valid_idx = np.setdiff1d(np.arange(len(IDS)), train_idx)
 np.random.seed(None)
 
 # create train subset and valid subset
-data = train_text_df[['id', 'text', 'entities']]
+data = train_text_df[['id', 'text', 'entities']]  # mk: this is where the NER csv gets used
 train_dataset = data.loc[data['id'].isin(IDS[train_idx]), ['text', 'entities']].reset_index(drop=True)
 test_dataset = data.loc[data['id'].isin(IDS[valid_idx])].reset_index(drop=True)
 
@@ -220,8 +195,8 @@ print("TRAIN Dataset: {}".format(train_dataset.shape))
 print("TEST Dataset: {}".format(test_dataset.shape))
 
 tokenizer = AutoTokenizer.from_pretrained(DOWNLOADED_MODEL_PATH)
-training_set = dataset(train_dataset, tokenizer, config['max_length'], False)
-testing_set = dataset(test_dataset, tokenizer, config['max_length'], True)
+training_set = Dataset(train_dataset, tokenizer, config['max_length'], False)
+testing_set = Dataset(test_dataset, tokenizer, config['max_length'], True)
 
 # train dataset and valid dataset
 train_params = {'batch_size': config['train_batch_size'],
@@ -240,23 +215,11 @@ training_loader = DataLoader(training_set, **train_params)
 testing_loader = DataLoader(testing_set, **test_params)
 
 # test dataset
-test_texts_set = dataset(test_texts, tokenizer, config['max_length'], True)
+test_texts_set = Dataset(test_texts, tokenizer, config['max_length'], True)
 test_texts_loader = DataLoader(test_texts_set, **test_params)
 
-# Train Model
-# The PyTorch train function is taken from Raghavendrakotala's great notebook [here][1]. I assume it uses a masked loss
-# which avoids computing loss when target is `-100`. If not, we need to update this.
-
-# In Kaggle notebooks, we will train our model for 5 epochs `batch_size=4` with Adam optimizer and learning rates
-# `LR = [2.5e-5, 2.5e-5, 2.5e-6, 2.5e-6, 2.5e-7]`. The loaded model was trained offline with `batch_size=8` and
-# `LR = [5e-5, 5e-5, 5e-6, 5e-6, 5e-7]`. (Note the learning rate changes `e-5`, `e-6`, and `e-7`). Using `batch_size=4`
-# will probably achieve a better validation score than `batch_size=8`, but I haven't tried yet.
-
-# [1]: https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
 
 # https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
-
-
 def train(epoch):
     tr_loss, tr_accuracy = 0, 0
     nb_tr_examples, nb_tr_steps = 0, 0
@@ -271,8 +234,7 @@ def train(epoch):
         mask = batch['attention_mask'].to(config['device'], dtype=torch.long)
         labels = batch['labels'].to(config['device'], dtype=torch.long)
 
-        loss, tr_logits = model(input_ids=ids, attention_mask=mask, labels=labels,
-                                return_dict=False)
+        loss, tr_logits = model(input_ids=ids, attention_mask=mask, labels=labels, return_dict=False)
         tr_loss += loss.item()
 
         nb_tr_steps += 1
@@ -315,45 +277,30 @@ def train(epoch):
 
 
 # create model
-config_model = AutoConfig.from_pretrained(DOWNLOADED_MODEL_PATH+'/config.json')
-
-model = AutoModelForTokenClassification.from_pretrained(DOWNLOADED_MODEL_PATH+'/pytorch_model.bin', config=config_model)
-
+config_model = AutoConfig.from_pretrained(DOWNLOADED_MODEL_PATH + '/config.json')
+model = AutoModelForTokenClassification.from_pretrained(
+    DOWNLOADED_MODEL_PATH + '/pytorch_model.bin', config=config_model)
 model.to(config['device'])
-
 optimizer = torch.optim.Adam(params=model.parameters(), lr=config['learning_rates'][0])
 
 # loop to train model (or load model)
 if not LOAD_MODEL_FROM:
     for epoch in range(config['epochs']):
-
         print(f"### Training epoch: {epoch + 1}")
         for g in optimizer.param_groups:
             g['lr'] = config['learning_rates'][epoch]
         lr = optimizer.param_groups[0]['lr']
         print(f'### LR = {lr}\n')
-
         train(epoch)
         torch.cuda.empty_cache()
         gc.collect()
-
-    torch.save(model.state_dict(), f'longformer_v{VER}.pt')
+    torch.save(model.state_dict(), f'bigbird_v{VER}.pt')
 else:
-    model.load_state_dict(torch.load(f'{LOAD_MODEL_FROM}/longformer_v{VER}.pt'))
+    model.load_state_dict(torch.load(f'{LOAD_MODEL_FROM}/bigbird_v{VER}.pt'))
     print('Model loaded.')
 
-# Inference and Validation Code
-# We will infer in batches using our data loader which is faster than inferring one text at a time with a for-loop. The
-# metric code is taken from Rob Mulla's great notebook [here][2]. Our model achieves validation F1 score 0.615!
 
-# During inference our model will make predictions for each subword token. Some single words consist of multiple subword
-# tokens. In the code below, we use a word's first subword token prediction as the label for the entire word. We can try
-# other approaches, like averaging all subword predictions or taking `B` labels before `I` labels etc.
-
-# [1]: https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
-# [2]: https://www.kaggle.com/robikscube/student-writing-competition-twitch
-
-
+# inference and validation loop
 def inference(batch):
     # move batch to gpu and infer
     ids = batch["input_ids"].to(config['device'])
@@ -361,7 +308,7 @@ def inference(batch):
     outputs = model(ids, attention_mask=mask, return_dict=False)
     all_preds = torch.argmax(outputs[0], axis=-1).cpu().numpy()
 
-    # interate through each text and get pred
+    # iterate through each text and get pred
     predictions = []
     for k, text_preds in enumerate(all_preds):
         token_preds = [ids_to_labels[i] for i in text_preds]
@@ -378,148 +325,3 @@ def inference(batch):
         predictions.append(prediction)
 
     return predictions
-
-
-# https://www.kaggle.com/zzy990106/pytorch-ner-infer
-# code has been modified from original
-def get_predictions(df=test_dataset, loader=testing_loader):
-    # put model in training mode
-    model.eval()
-
-    # get word label predictions
-    y_pred2 = []
-    for batch in loader:
-        labels = inference(batch)
-        y_pred2.extend(labels)
-
-    final_preds2 = []
-    for i in range(len(df)):
-
-        idx = df.id.values[i]
-        # pred = [x.replace('B-','').replace('I-','') for x in y_pred2[i]]
-        pred = y_pred2[i]  # Leave "B" and "I"
-        preds = []
-        j = 0
-        while j < len(pred):
-            cls = pred[j]
-            if cls == 'O':
-                j += 1
-            else:
-                cls = cls.replace('B', 'I')  # spans start with B
-            end = j + 1
-            while end < len(pred) and pred[end] == cls:
-                end += 1
-
-            if cls != 'O' and cls != '' and end - j > 7:
-                final_preds2.append((idx, cls.replace('I-', ''),
-                                     ' '.join(map(str, list(range(j, end))))))
-
-            j = end
-
-    oof = pd.DataFrame(final_preds2)
-    oof.columns = ['id', 'class', 'predictionstring']
-
-    return oof
-
-
-# from Rob Mulla @robikscube
-# https://www.kaggle.com/robikscube/student-writing-competition-twitch
-def calc_overlap(row):
-    """
-    Calculates the overlap between prediction and
-    ground truth and overlap percentages used for determining
-    true positives.
-    """
-    set_pred = set(row.predictionstring_pred.split(' '))
-    set_gt = set(row.predictionstring_gt.split(' '))
-    # Length of each and intersection
-    len_gt = len(set_gt)
-    len_pred = len(set_pred)
-    inter = len(set_gt.intersection(set_pred))
-    overlap_1 = inter / len_gt
-    overlap_2 = inter / len_pred
-    return [overlap_1, overlap_2]
-
-
-def score_feedback_comp(pred_df, gt_df):
-    """
-    A function that scores for the kaggle Student Writing Competition
-    Uses the steps in the evaluation page here: https://www.kaggle.com/c/feedback-prize-2021/overview/evaluation
-    """
-    gt_df = gt_df[['id', 'discourse_type', 'predictionstring']].reset_index(drop=True).copy()
-    pred_df = pred_df[['id', 'class', 'predictionstring']].reset_index(drop=True).copy()
-    pred_df['pred_id'] = pred_df.index
-    gt_df['gt_id'] = gt_df.index
-
-    # Step 1. all ground truths and predictions for a given class are compared.
-    joined = pred_df.merge(gt_df,
-                           left_on=['id', 'class'],
-                           right_on=['id', 'discourse_type'],
-                           how='outer',
-                           suffixes=('_pred', '_gt')
-                           )
-
-    joined['predictionstring_gt'] = joined['predictionstring_gt'].fillna(' ')
-
-    joined['predictionstring_pred'] = joined['predictionstring_pred'].fillna(' ')
-
-    joined['overlaps'] = joined.apply(calc_overlap, axis=1)
-
-    # 2. If the overlap between the ground truth and prediction is >= 0.5, and the overlap between the prediction and
-    # the ground truth >= 0.5, the prediction is a match and considered a true positive. If multiple matches exist, the
-    # match with the highest pair of overlaps is taken.
-
-    joined['overlap1'] = joined['overlaps'].apply(lambda x: eval(str(x))[0])
-
-    joined['overlap2'] = joined['overlaps'].apply(lambda x: eval(str(x))[1])
-
-    joined['potential_TP'] = (joined['overlap1'] >= 0.5) & (joined['overlap2'] >= 0.5)
-
-    joined['max_overlap'] = joined[['overlap1', 'overlap2']].max(axis=1)
-
-    tp_pred_ids = joined.query('potential_TP').sort_values('max_overlap', ascending=False).groupby(['id', 'predictionstring_gt']).first()['pred_id'].values
-
-    # 3. Any unmatched ground truths are false negatives and any unmatched predictions are false positives.
-    fp_pred_ids = [p for p in joined['pred_id'].unique() if p not in tp_pred_ids]
-
-    matched_gt_ids = joined.query('potential_TP')['gt_id'].unique()
-    unmatched_gt_ids = [c for c in joined['gt_id'].unique() if c not in matched_gt_ids]
-
-    # Get numbers of each type
-    tp = len(tp_pred_ids)
-    fp = len(fp_pred_ids)
-    fn = len(unmatched_gt_ids)
-
-    # calc microf1
-    my_f1_score = tp / (tp + 0.5 * (fp + fn))
-    return my_f1_score
-
-
-if COMPUTE_VAL_SCORE:  # note this doesn't run during submit
-    # valid targets
-    valid = train_df.loc[train_df['id'].isin(IDS[valid_idx])]
-
-    # OOF predictions
-    oof = get_predictions(test_dataset, testing_loader)
-
-    # compute f1 score
-    f1s = []
-    CLASSES = oof['class'].unique()
-    print()
-
-    for c in CLASSES:
-        pred_df = oof.loc[oof['class'] == c].copy()
-        gt_df = valid.loc[valid['discourse_type'] == c].copy()
-        f1 = score_feedback_comp(pred_df, gt_df)
-        print(c, f1)
-        f1s.append(f1)
-    print()
-    print('Overall', np.mean(f1s))
-    print()
-
-# Infer Test Data and Write Submission CSV. We will now infer the test data and write submission CSV
-sub = get_predictions(test_texts, test_texts_loader)
-print(sub.head())
-sub.to_csv("submission.csv", index=False)
-
-

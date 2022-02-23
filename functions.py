@@ -434,7 +434,7 @@ class EarlyStopping(Callback):
             self.counter = 0
             data = score
             score_df = pd.DataFrame(columns='score')
-            if not score_df.empty:  # this is just a thought for now. want to record the best score for each fold
+            if not score_df.empty:  # just a thought for now. I want to record the saved/best score for ea. fold
                 pd.append({'score': data}, ignore_index=False)
             else:
                 pd.append({'score': data}, ignore_index=False)
