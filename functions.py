@@ -28,7 +28,7 @@ def split(df):
     However, these cross validators do not offer the ability to stratify multilabel data. This iterative-stratification
     project offers implementations of MultilabelStratifiedKFold, MultilabelRepeatedStratifiedKFold, and
     MultilabelStratifiedShuffleSplit with a base algorithm for stratifying multilabel data.
-    https://github.com/trent-b/iterative-stratification. This is largegly unchanged from Abishek's code.
+    https://github.com/trent-b/iterative-stratification. This is largely unchanged from Abishek's code.
     :param df: the training data to be split
     :return: multilabel stratified Kfolds
     """
@@ -50,6 +50,14 @@ def split(df):
 
 
 def _prepare_training_data_helper(args, tokenizer, df, train_ids):
+    """
+
+    :param args:
+    :param tokenizer:
+    :param df:
+    :param train_ids:
+    :return:
+    """
     training_samples = []
     for idx in tqdm(train_ids):
         filename = os.path.join(args.input, "train", f'{idx}.txt')
@@ -87,6 +95,14 @@ def _prepare_training_data_helper(args, tokenizer, df, train_ids):
 
 
 def prepare_training_data(df, tokenizer, args, num_jobs):
+    """
+
+    :param df:
+    :param tokenizer:
+    :param args:
+    :param num_jobs:
+    :return:
+    """
     training_samples = []
     train_ids = df["id"].unique()
     train_ids_splits = np.array_split(train_ids, num_jobs)
@@ -101,6 +117,8 @@ def calc_overlap(row):
     """
     Calculates the overlap between prediction and ground truth and overlap percentages used for determining true
     positives.
+    :param row:
+    :return:
     """
     set_pred = set(row.predictionstring_pred.split(" "))
     set_gt = set(row.predictionstring_gt.split(" "))
@@ -117,6 +135,9 @@ def score_feedback_comp_micro(pred_df, gt_df):
     """
     A function that scores for the kaggle Student Writing Competition. Uses the steps in the evaluation page here:
     https://www.kaggle.com/c/feedback-prize-2021/overview/evaluation This code is from Rob Mulla's Kaggle kernel.
+    :param pred_df:
+    :param gt_df:
+    :return:
     """
     gt_df = gt_df[["id", "discourse_type", "predictionstring"]].reset_index(drop=True).copy()
     pred_df = pred_df[["id", "class", "predictionstring"]].reset_index(drop=True).copy()
@@ -156,6 +177,13 @@ def score_feedback_comp_micro(pred_df, gt_df):
 
 
 def score_feedback_comp(pred_df, gt_df, return_class_scores=False):
+    """
+
+    :param pred_df:
+    :param gt_df:
+    :param return_class_scores:
+    :return:
+    """
     class_scores = {}
     pred_df = pred_df[["id", "class", "predictionstring"]].reset_index(drop=True).copy()
     for discourse_type, gt_subset in gt_df.groupby("discourse_type"):
@@ -192,9 +220,18 @@ class FeedbackDatasetValid:
 
 class Collate:
     def __init__(self, tokenizer):
+        """
+
+        :param tokenizer:
+        """
         self.tokenizer = tokenizer
 
     def __call__(self, batch):
+        """
+
+        :param batch:
+        :return:
+        """
         output = dict()
         output["ids"] = [sample["ids"] for sample in batch]
         output["mask"] = [sample["mask"] for sample in batch]
@@ -388,15 +425,30 @@ def parse_args():
 
 class FeedbackDataset:
     def __init__(self, samples, max_len, tokenizer):
+        """
+
+        :param samples:
+        :param max_len:
+        :param tokenizer:
+        """
         self.samples = samples
         self.max_len = max_len
         self.tokenizer = tokenizer
         self.length = len(samples)
 
     def __len__(self):
+        """
+
+        :return:
+        """
         return self.length
 
     def __getitem__(self, idx):
+        """
+
+        :param idx:
+        :return:
+        """
         input_ids = self.samples[idx]["input_ids"]
         input_labels = self.samples[idx]["input_labels"]
         input_labels = [Targets.target_id_map[x] for x in input_labels]
@@ -415,7 +467,7 @@ class FeedbackDataset:
         input_ids = input_ids + [self.tokenizer.sep_token_id]
         input_labels = input_labels + [other_label_id]
         attention_mask = [1] * len(input_ids)
-        padding_length = self.max_len - len(input_ids)
+        padding_length = self.max_len - len(input_ids)  # in some notebooks its commented out from here
         if padding_length > 0:
             if self.tokenizer.padding_side == "right":
                 input_ids = input_ids + [self.tokenizer.pad_token_id] * padding_length
@@ -424,7 +476,7 @@ class FeedbackDataset:
             else:
                 input_ids = [self.tokenizer.pad_token_id] * padding_length + input_ids
                 input_labels = [padding_label_id] * padding_length + input_labels
-                attention_mask = [0] * padding_length + attention_mask
+                attention_mask = [0] * padding_length + attention_mask  # to here
 
         return {
             "ids": torch.tensor(input_ids, dtype=torch.long),
@@ -435,6 +487,14 @@ class FeedbackDataset:
 
 class FeedbackModel(tez.Model):
     def __init__(self, model_name, num_train_steps, learning_rate, num_labels, steps_per_epoch):
+        """
+        model class. Currently, uses tez. need to refactor to use base pytorch & huggingface
+        :param model_name:
+        :param num_train_steps:
+        :param learning_rate:
+        :param num_labels:
+        :param steps_per_epoch:
+        """
         super().__init__()
         self.learning_rate = learning_rate
         self.model_name = model_name
@@ -467,6 +527,10 @@ class FeedbackModel(tez.Model):
         self.output = nn.Linear(config.hidden_size, self.num_labels)
 
     def fetch_optimizer(self):
+        """
+        function to get and configure AdamW optimizer
+        :return:
+        """
         param_optimizer = list(self.named_parameters())
         no_decay = ["bias", "LayerNorm.bias"]
         optimizer_parameters = [
@@ -483,6 +547,10 @@ class FeedbackModel(tez.Model):
         return opt
 
     def fetch_scheduler(self):
+        """
+
+        :return:
+        """
         sch = get_cosine_schedule_with_warmup(
             self.optimizer,
             num_warmup_steps=int(0.1 * self.num_train_steps),
@@ -493,6 +561,13 @@ class FeedbackModel(tez.Model):
         return sch
 
     def loss(self, outputs, targets, attention_mask):
+        """
+        function calculate cross entropy loss
+        :param outputs:
+        :param targets:
+        :param attention_mask:
+        :return:
+        """
         loss_fct = nn.CrossEntropyLoss()
 
         active_loss = attention_mask.view(-1) == 1
@@ -507,6 +582,13 @@ class FeedbackModel(tez.Model):
         return loss
 
     def monitor_metrics(self, outputs, targets, attention_mask):
+        """
+
+        :param outputs:
+        :param targets:
+        :param attention_mask:
+        :return:
+        """
         active_loss = (attention_mask.view(-1) == 1).cpu().numpy()
         active_logits = outputs.view(-1, self.num_labels)
         true_labels = targets.view(-1).cpu().numpy()
@@ -516,6 +598,14 @@ class FeedbackModel(tez.Model):
         return {"f1": f1_score}
 
     def forward(self, ids, mask, token_type_ids=None, targets=None):
+        """
+
+        :param ids:
+        :param mask:
+        :param token_type_ids:
+        :param targets:
+        :return:
+        """
         if token_type_ids:
             transformer_out = self.transformer(ids, mask, token_type_ids)
         else:
@@ -550,3 +640,109 @@ class FeedbackModel(tez.Model):
             return logits, loss, metric
 
         return logits, loss, {}
+
+
+def _prepare_test_data_helper(args, tokenizer, ids):
+    """
+    for inference
+    :param args:
+    :param tokenizer:
+    :param ids:
+    :return:
+    """
+    test_samples = []
+    for idx in ids:
+        filename = os.path.join(args.input_path, "test", idx + ".txt")
+        with open(filename, "r") as f:
+            text = f.read()
+
+        encoded_text = tokenizer.encode_plus(
+            text,
+            add_special_tokens=False,
+            return_offsets_mapping=True,
+        )
+        input_ids = encoded_text["input_ids"]
+        offset_mapping = encoded_text["offset_mapping"]
+
+        sample = {
+            "id": idx,
+            "input_ids": input_ids,
+            "text": text,
+            "offset_mapping": offset_mapping,
+        }
+
+        test_samples.append(sample)
+    return test_samples
+
+
+def prepare_test_data(df, tokenizer, args):
+    """
+    for inference
+    :param df:
+    :param tokenizer:
+    :param args:
+    :return:
+    """
+    test_samples = []
+    ids = df["id"].unique()
+    ids_splits = np.array_split(ids, 4)
+
+    results = Parallel(n_jobs=4, backend="multiprocessing")(
+        delayed(_prepare_test_data_helper)(args, tokenizer, idx) for idx in ids_splits
+    )
+    for result in results:
+        test_samples.extend(result)
+
+    return test_samples
+
+
+def jn(pst, start, end):
+    """
+    for inference
+    :param pst:
+    :param start:
+    :param end:
+    :return:
+    """
+    return " ".join([str(x) for x in pst[start:end]])
+
+
+def link_evidence(oof):
+    """
+    for inference
+    :param oof:
+    :return:
+    """
+    thresh = 1
+    idu = oof['id'].unique()
+    idc = idu[1]
+    eoof = oof[oof['class'] == "Evidence"]
+    neoof = oof[oof['class'] != "Evidence"]
+    for thresh2 in range(26, 27, 1):
+        retval = []
+        for idv in idu:
+            for c in ['Lead', 'Position', 'Evidence', 'Claim', 'Concluding Statement',
+                      'Counterclaim', 'Rebuttal']:
+                q = eoof[(eoof['id'] == idv) & (eoof['class'] == c)]
+                if len(q) == 0:
+                    continue
+                pst = []
+                for i, r in q.iterrows():
+                    pst = pst + [-1] + [int(x) for x in r['predictionstring'].split()]
+                start = 1
+                end = 1
+                for i in range(2, len(pst)):
+                    cur = pst[i]
+                    end = i
+                    # if pst[start] == 205:
+                    #   print(cur, pst[start], cur - pst[start])
+                    if (cur == -1 and c != 'Evidence') or ((cur == -1) and (
+                            (pst[i + 1] > pst[end - 1] + thresh) or (pst[i + 1] - pst[start] > thresh2))):
+                        retval.append((idv, c, jn(pst, start, end)))
+                        start = i + 1
+                v = (idv, c, jn(pst, start, end + 1))
+                # print(v)
+                retval.append(v)
+        roof = pd.DataFrame(retval, columns=['id', 'class', 'predictionstring'])
+        roof = roof.merge(neoof, how='outer')
+        return roof

@@ -31,8 +31,8 @@ config_dictionary = dict(
 
 if __name__ == "__main__":
     wandb.login(key=API_KEY)
-    # wandb.init(entity=ENTITY, project=PROJECT, tags=TAGS, save_code=SAVE_CODE, config=config_dictionary)
-    wandb.init(config=config_dictionary)
+    # wandb.init(entity=ENTITY, project=PROJECT, tags=TAGS, config=config_dictionary)
+    wandb.init(config=config_dictionary, project="feedback_prize_pytorch", entity="feedback_prize_michael_and_wilson")
 
     split(Parameters.TRAIN_DF)
 
@@ -66,19 +66,26 @@ if __name__ == "__main__":
             model_path=os.path.join(args.output, f"model_{args.fold}.bin"),
             valid_df=valid_df,
             valid_samples=valid_samples,
-            batch_size=args.batch_size, patience=HyperParameters.PATIENCE, mode="max",
+            batch_size=args.batch_size,
+            patience=HyperParameters.PATIENCE,
+            mode="max",
             delta=HyperParameters.DELTA,
-            save_weights_only=True, tokenizer=tokenizer)
+            save_weights_only=True,
+            tokenizer=tokenizer
+        )
 
         model.fit(
             train_dataset,
             train_bs=args.batch_size,
             device="cuda",
-            epochs=args.epochs, callbacks=[es],
+            epochs=args.epochs,
+            callbacks=[es],
             fp16=True,
             accumulation_steps=args.accumulation_steps,
         )
 
+        # wandb.log({"mode": mode})
+        wandb.watch(model)
         torch.cuda.empty_cache()
         gc.collect()
 

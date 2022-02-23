@@ -7,7 +7,7 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 
 class Parameters:
-    EXPERIMENT_NAME = 'feedback_prize_exp_52-2'  # increment for each experiment
+    EXPERIMENT_NAME = 'feedback_prize_exp_52-0'  # increment for each experiment
     MODEL_SAVENAME = f'longformer_{EXPERIMENT_NAME}'  # I've read bigbird gives 1-3% better performance. Consider.
     MODEL_NAME = 'longformer'  # this is longformer-base-4096
     DATA_DIR = 'data'
@@ -68,10 +68,10 @@ class Targets:
     id_target_map = {v: k for k, v in target_id_map.items()}
 
     proba_thresh = {
-        "Lead": 0.7,  # 0.689
-        "Position": 0.55,  # 0.539
-        "Evidence": 0.65,  # 0.639
-        "Claim": 0.55,  # 0.539
+        "Lead": 0.7,  # 0.689,
+        "Position": 0.55,  # 0.539,
+        "Evidence": 0.65,  # 0.639,
+        "Claim": 0.55,  # 0.539,
         "Concluding Statement": 0.7,  # 0.589
         "Counterclaim": 0.5,  # 0.539
         "Rebuttal": 0.55,  # 0.539
@@ -90,8 +90,8 @@ class Targets:
 
 class Args1:
     input_path = "data"
-    model = "longformer"
-    tez_model = "fblongformerlarge1536/"
+    model = "longformer"  # change this to match the model used for training
+    tez_model = "fblongformerlarge1536"  # change this to one of the other trained models to test
     output = "."
     batch_size = 12
     max_len = 4096
@@ -99,8 +99,8 @@ class Args1:
 
 class Args2:
     input_path = "data"
-    model = "longformer"
-    tez_model = "tez-fb-large"
+    model = "longformer-large-4056"  # change this to match the model used for training
+    tez_model = "tez-fb-large"  # change this to one of the other trained models to test
     output = "."
     batch_size = 12
     max_len = 4096
