@@ -171,3 +171,6 @@ wandb_creds.py
 /longformer-base-4096-non-standard/training_args.bin
 /checkpoints/
 /longformer-base-4096-non-standard/
+/longformer-base-4096-original/
+/longformer-large-4096-from-kaggle/
+/longformer-large-4096-original/
