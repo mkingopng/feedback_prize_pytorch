@@ -34,8 +34,6 @@ So in summary, OFI's are:
 6) ensemble -> can i use GBDT to enhance?
 7) tuning: choose the right max_char, LR and other hyperparameters
 8) print CV for the whole training run at the end, rather than manually calculating the average
-9) how can I schedule this training program to start a new training run at completion of the current? keep rolling... Notionally I can 
-complete 2-3 runs per day if I do this. Is it as simple as nesting it in another for loop? More iterations means more choices.
 
 # NB: I ran inference on my own checkpoint files and  got a surprisingly good result: 0.666. 
 This is surprising as it's higher than the average for either of the checkpoints I used 
