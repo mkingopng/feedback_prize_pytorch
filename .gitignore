@@ -186,6 +186,3 @@ wandb_creds.py
 bigbird-base-hf/
 bigbird-robert-large-hf/
 eda-notebooks/
-/hugging_face_approach/
-/scratch/
-/bigbird-roberta-large-hf/
