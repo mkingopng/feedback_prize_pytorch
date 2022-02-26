@@ -186,3 +186,11 @@ wandb_creds.py
 bigbird-base-hf/
 bigbird-robert-large-hf/
 eda-notebooks/
+/hugging_face_approach/
+/bigbird-roberta-large-hf/flasx_model.msgpack
+/bigbird-roberta-large-hf/pytorch_model.bin
+/bigbird-roberta-large-hf/README.md
+/bigbird-roberta-large-hf/config.json
+/bigbird-roberta-large-hf/gitattributes
+/bigbird-roberta-large-hf/spiece.model
+/bigbird-roberta-large-hf/tokenizer_config.json
