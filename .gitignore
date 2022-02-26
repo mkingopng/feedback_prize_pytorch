@@ -182,3 +182,10 @@ wandb_creds.py
 /tweaked-proba-thresholds.ipynb
 /vocabulary-txt-coverage-improvement-80-to-99.ipynb
 /research-notebooks-eda/
+.idea/csv-plugin.xml
+bigbird-base-hf/
+bigbird-robert-large-hf/
+eda-notebooks/
+/hugging_face_approach/
+/scratch/
+/bigbird-roberta-large-hf/
