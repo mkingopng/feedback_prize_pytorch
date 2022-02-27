@@ -10,9 +10,9 @@ class Parameters:
     VER = 0
     EXPERIMENT_NAME = f'feedback_prize_exp_{VER}'  # increment for each experiment
     MODEL_SAVENAME = f'longformer_{EXPERIMENT_NAME}'  # I've read bigbird gives 1-3% better performance. Consider.
-    MODEL_NAME = 'longformer-base-4096-hf'  # this is longformer-base-4096
+    MODEL_NAME = 'longformer'  # this is longformer-base-4096
     DATA_DIR = 'data'
-    LOAD_TOKENS_FROM = 'longformer-4096-hf'
+    LOAD_TOKENS_FROM = 'longformer'
     TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
     FOLDS_DF = pd.read_csv('5_train_folds.csv')
     pre_data_dir = os.path.join('preprocessed')  # what is this used for? Can't find it in the code. delete?
@@ -33,8 +33,8 @@ class HyperParameters:
     VERBOSE_STEPS = 500  # what does this do?
     RANDOM_SEED = 42
     MAX_LENGTH = 1024  # 4096 is model max. Some points it specifies 4096, others 1024.
-    BATCH_SIZE = 1  # 1 -8 depending on model and max_length
-    LR = 3e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
+    BATCH_SIZE = 8  # 1 -8 depending on model and max_length
+    LR = 5e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
     NUM_LABELS = 15
     NUM_JOBS = 12
     LABEL_SUBTOKENS = True
