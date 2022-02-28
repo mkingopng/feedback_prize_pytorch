@@ -2,7 +2,7 @@
 
 """
 import wandb
-
+import torch
 from hf_functions import *
 from wandb_creds import *
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # this is not the competition metric, but for now this will be better than nothing...
     metric = load_metric("seqeval")
 
-    compute_metrics(p=p, i2l=i2l, metric=metric)  # mk: an issue with p unfulfilled
+    compute_metrics(p=p, i2l=i2l, metric=metric)  # mk: Issue with p unfulfilled. Not present in notebook
 
     trainer = Trainer(
         model,
@@ -91,6 +91,12 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         compute_metrics=compute_metrics,
     )
+
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")  # use the GPU
+
+    wandb.log()  # new addition
+
+    wandb.watch(model)  # new addition
 
     trainer.train()
 

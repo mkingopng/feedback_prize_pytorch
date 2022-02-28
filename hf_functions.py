@@ -1,6 +1,7 @@
 """
 
 """
+import hf_config
 from hf_config import *
 import numpy as np
 import pandas as pd
@@ -15,6 +16,12 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification, Trainin
 
 
 def create_l2i(tags, classes):
+    """
+
+    :param tags:
+    :param classes:
+    :return:
+    """
     for i, c in enumerate(classes):
         tags[f'B-{c}'] = i
         tags[f'I-{c}'] = i + len(classes)
@@ -25,6 +32,11 @@ def create_l2i(tags, classes):
 
 
 def create_i2l(l2i):
+    """
+
+    :param l2i:
+    :return:
+    """
     i2l = defaultdict()
     for k, v in l2i.items():
         i2l[v] = k
@@ -34,29 +46,54 @@ def create_i2l(l2i):
 
 
 def create_n_labels(i2l):
+    """
+
+    :param i2l:
+    :return:
+    """
     n_labels = len(i2l) - 1  # not accounting for -100
     return n_labels
 
 
 def get_raw_text(ids):
+    """
+
+    :param ids:
+    :return:
+    """
     with open(Config.TRAIN_DATA/f'{ids}.txt', 'r') as file:
         data = file.read()
     return data
 
 
 def dataset(df):
+    """
+
+    :param df:
+    :return:
+    """
     ds = Dataset.from_pandas(df)
     datasets = ds.train_test_split(test_size=0.1, shuffle=True, seed=42)
     return datasets
 
 
 def set_tokenizer(model_checkpoint):
+    """
+
+    :param model_checkpoint:
+    :return:
+    """
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, add_prefix_space=True)
     return tokenizer
 
 
 def fix_beginnings(labels):
-    for i in range(1,len(labels)):
+    """
+
+    :param labels:
+    :return:
+    """
+    for i in range(1, len(labels)):
         curr_lab = labels[i]
         prev_lab = labels[i-1]
         if curr_lab in range(7,14):
@@ -67,6 +104,15 @@ def fix_beginnings(labels):
 
 # tokenize and add labels
 def tokenize_and_align_labels(examples, max_length, tokenizer, l2i, stride):
+    """
+
+    :param examples:
+    :param max_length:
+    :param tokenizer:
+    :param l2i:
+    :param stride:
+    :return:
+    """
     o = tokenizer(
         examples['text'],
         truncation=True,
@@ -76,13 +122,11 @@ def tokenize_and_align_labels(examples, max_length, tokenizer, l2i, stride):
         stride=stride,
         return_overflowing_tokens=True
         )
-
-    # Since one example might give us several features if it has a long context, we need a map from a feature to
-    # its corresponding example. This key gives us just that.
+    # Since one example might give us several features if it has a long context, we need a map from a feature to its
+    # corresponding example. This key gives us just that.
     sample_mapping = o["overflow_to_sample_mapping"]
-
-    # The offset mappings will give us a map from token to character position in the original context. This will
-    # help us compute the start_positions and end_positions.
+    # The offset mappings will give us a map from token to character position in the original context. This will help us
+    # compute the start_positions and end_positions.
     offset_mapping = o["offset_mapping"]
     o["labels"] = []
     for i in range(len(offset_mapping)):
@@ -107,6 +151,12 @@ def tokenize_and_align_labels(examples, max_length, tokenizer, l2i, stride):
 
 
 def tokenize_datasets(datasets, batch_size):
+    """
+
+    :param datasets:
+    :param batch_size:
+    :return:
+    """
     datasets.map(
         tokenize_and_align_labels,
         batched=True,
@@ -116,9 +166,15 @@ def tokenize_datasets(datasets, batch_size):
 
 
 def compute_metrics(p, i2l, metric):
+    """
+
+    :param p:
+    :param i2l:
+    :param metric:
+    :return:
+    """
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
-
     # Remove ignored index (special tokens)
     true_predictions = [
         [i2l[p] for (p, l) in zip(prediction, label) if l != -100]
@@ -128,9 +184,7 @@ def compute_metrics(p, i2l, metric):
         [i2l[l] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
-
     results = metric.compute(predictions=true_predictions, references=true_labels)
-
     return {
         "precision": results["overall_precision"],
         "recall": results["overall_recall"],
@@ -190,7 +244,7 @@ def ground_truth_for_validation(tokenized_val):
 
 def visualize(df, text, colors, train_df):
     """
-    # visualization with displacy
+    visualization with displacy
     :param df:
     :param text:
     :return:
@@ -214,6 +268,7 @@ def visualize(df, text, colors, train_df):
 
 # code that will convert our predictions into prediction strings, and visualize it at the same time
 # this most likely requires some refactoring
+
 
 def get_class(c, i2l):
     """
@@ -276,7 +331,7 @@ def pred2span(text, all_span, classes, predstrings, example_id, min_tokens, pred
     # short spans are likely to be false positives, we can choose a min number of tokens based on validation
     df = df[df.length > min_tokens].reset_index(drop=True)  # mk: problem here with min_tokens
     if viz:
-        visualize(df, text, colors=, train_df=)  # mk: problem here with circular logic
+        visualize(df, text, colors=hf_config.COLORS, train_df=Parameters.TRAIN_DF)  # mk: problem here with circular logic
     return df
 
 
@@ -335,7 +390,6 @@ def score_feedback_comp_micro(pred_df, gt_df):
     # match with the highest pair of overlaps is taken.
     joined["overlap1"] = joined["overlaps"].apply(lambda x: eval(str(x))[0])
     joined["overlap2"] = joined["overlaps"].apply(lambda x: eval(str(x))[1])
-
     joined["potential_TP"] = (joined["overlap1"] >= 0.5) & (joined["overlap2"] >= 0.5)
     joined["max_overlap"] = joined[["overlap1", "overlap2"]].max(axis=1)
     tp_pred_ids = (
@@ -348,7 +402,6 @@ def score_feedback_comp_micro(pred_df, gt_df):
 
     # 3. Any unmatched ground truths are false negatives and any unmatched predictions are false positives.
     fp_pred_ids = [p for p in joined["pred_id"].unique() if p not in tp_pred_ids]
-
     matched_gt_ids = joined.query("potential_TP")["gt_id"].unique()
     unmatched_gt_ids = [c for c in joined["gt_id"].unique() if c not in matched_gt_ids]
 

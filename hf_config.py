@@ -9,7 +9,7 @@ from collections import defaultdict
 class Config:
     EXP_NUM = 4
     TASK = 'ner'
-    MODEL_CHECKPOINT = 'longformer-base-4096'
+    MODEL_CHECKPOINT = 'longformer-base-4096-hf'
     STRIDE = 128
     MIN_TOKENS = 6
     MODEL_PATH = f'{MODEL_CHECKPOINT.split("/")[-1]}-{EXP_NUM}'
@@ -35,3 +35,14 @@ class TrainingHyperParameters:
     N_EPOCHS = 5
     MAX_LENGTH = 1024
 
+
+COLORS = {
+    'Lead': '#8000ff',
+    'Position': '#2b7ff6',
+    'Evidence': '#2adddd',
+    'Claim': '#80ffb4',
+    'Concluding Statement': 'd4dd80',
+    'Counterclaim': '#ff8042',
+    'Rebuttal': '#ff0000',
+    'Other': '#007f00'
+}
