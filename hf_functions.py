@@ -174,16 +174,20 @@ def compute_metrics(p, i2l, metric):
     :return:
     """
     predictions, labels = p
+
     predictions = np.argmax(predictions, axis=2)
+
     # Remove ignored index (special tokens)
     true_predictions = [
         [i2l[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
+
     true_labels = [
         [i2l[l] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
+
     results = metric.compute(predictions=true_predictions, references=true_labels)
     return {
         "precision": results["overall_precision"],

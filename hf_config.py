@@ -4,18 +4,20 @@
 import pandas as pd
 import os
 from collections import defaultdict
+import torch
 
 
 class Config:
-    EXP_NUM = 4
+    EXP_NUM = 1  # increment for each experiment
     TASK = 'ner'
-    MODEL_CHECKPOINT = 'longformer-base-4096-hf'
+    MODEL_CHECKPOINT = 'longformer-base-4096-hf'  # try using longformer large
     STRIDE = 128
     MIN_TOKENS = 6
     MODEL_PATH = f'{MODEL_CHECKPOINT.split("/")[-1]}-{EXP_NUM}'
     DATA_DIR = 'data'
     TRAIN_DATA = os.path.join('data', 'train')
     SAMPLE = False  # set True for debugging
+    DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")  # use GPU
 
 
 class Parameters:
@@ -27,11 +29,11 @@ class Parameters:
 
 
 class TrainingHyperParameters:
-    BS = 4
-    GRAD_ACC = 8
-    LR = 5e-5
-    WD = 0.01
-    WARMUP = 0.1
+    BATCH_SIZE = 8  # based on GPU memory
+    GRAD_ACC = 8  #
+    LEARNING_RATE = 5e-5  # need to optimize this
+    WEIGHT_DECAY = 0.01
+    WARMUP_RATIO = 0.1
     N_EPOCHS = 5
     MAX_LENGTH = 1024
 

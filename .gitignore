@@ -194,3 +194,4 @@ eda-notebooks/
 /bigbird-roberta-large-hf/gitattributes
 /bigbird-roberta-large-hf/spiece.model
 /bigbird-roberta-large-hf/tokenizer_config.json
+/longformer-base-4096-hf-finetuned-ner/

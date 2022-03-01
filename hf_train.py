@@ -16,9 +16,9 @@ if __name__ == "__main__":
     wandb.login(key=API_KEY)
     wandb.init(project="feedback_prize_pytorch", entity=ENTITY)
 
-    l2i = create_l2i(Parameters.CLASSES, Parameters.TAGS)
-    i2l = create_i2l(l2i=l2i)
-    n_labels = create_n_labels(i2l)
+    l2i = create_l2i(Parameters.CLASSES, Parameters.TAGS)  # need to improve the variable name
+    i2l = create_i2l(l2i=l2i)  # need to improve the variable name
+    n_labels = create_n_labels(i2l)  # this is too close to the other capitalize variable name
 
     df1 = Parameters.TRAIN_DF.groupby('id')['discourse_type'].apply(list).reset_index(name='classlist')
     df2 = Parameters.TRAIN_DF.groupby('id')['discourse_start'].apply(list).reset_index(name='starts')
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     fix_beginnings(Parameters.E)
 
-    o = tokenize_and_align_labels(
+    o = tokenize_and_align_labels(  # Need to have a nore meaningful variable name
         max_length=TrainingHyperParameters.MAX_LENGTH,
         l2i=l2i,
         tokenizer=tokenizer,
@@ -65,14 +65,14 @@ if __name__ == "__main__":
         evaluation_strategy="epoch",
         logging_strategy="epoch",
         save_strategy="epoch",
-        learning_rate=TrainingHyperParameters.LR,
-        per_device_train_batch_size=TrainingHyperParameters.BS,
-        per_device_eval_batch_size=TrainingHyperParameters.BS,
+        learning_rate=TrainingHyperParameters.LEARNING_RATE,
+        per_device_train_batch_size=TrainingHyperParameters.BATCH_SIZE,
+        per_device_eval_batch_size=TrainingHyperParameters.BATCH_SIZE,
         num_train_epochs=TrainingHyperParameters.N_EPOCHS,
-        weight_decay=TrainingHyperParameters.WD,
+        weight_decay=TrainingHyperParameters.WEIGHT_DECAY,
         report_to='wandb',
         gradient_accumulation_steps=TrainingHyperParameters.GRAD_ACC,
-        warmup_ratio=TrainingHyperParameters.WARMUP
+        warmup_ratio=TrainingHyperParameters.WARMUP_RATIO
     )
 
     data_collator = DataCollatorForTokenClassification(tokenizer)
@@ -80,7 +80,9 @@ if __name__ == "__main__":
     # this is not the competition metric, but for now this will be better than nothing...
     metric = load_metric("seqeval")
 
-    compute_metrics(p=p, i2l=i2l, metric=metric)  # mk: Issue with p unfulfilled. Not present in notebook
+    p = []  # mk: Issue with p unfulfilled. Not present in notebook. try using an empty list prior to function call.
+
+    compute_metrics(p=p, i2l=i2l, metric=metric)
 
     trainer = Trainer(
         model,
@@ -98,15 +100,15 @@ if __name__ == "__main__":
 
     wandb.watch(model)  # new addition
 
-    trainer.train()
+    trainer.train()  #
 
-    wandb.finish()
+    wandb.finish()  #
 
-    trainer.save_model(Config.MODEL_PATH)
+    trainer.save_model(Config.MODEL_PATH)  #
 
-    tokenized_val = dataset.map(tokenize_for_validation, batched=True)
+    tokenized_val = dataset.map(tokenize_for_validation, batched=True)  #
 
-    ground_truth_df = ground_truth_for_validation(tokenized_val=tokenized_val)
+    ground_truth_df = ground_truth_for_validation(tokenized_val=tokenized_val)  #
 
     predictions, labels, _ = trainer.predict(tokenized_val['test'])
 
