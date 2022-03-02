@@ -2,7 +2,6 @@
 
 """
 import wandb
-import torch
 from hf_functions import *
 from wandb_creds import *
 
@@ -13,11 +12,13 @@ SAMPLE = False  # set True for debugging
 
 
 if __name__ == "__main__":
-    wandb.login(key=API_KEY)
-    wandb.init(project="feedback_prize_pytorch", entity=ENTITY)
+    # wandb.login(key=API_KEY)
+    # wandb.init(project="feedback_prize_pytorch", entity=ENTITY)
 
-    label_to_index = create_label_to_index(Parameters.CLASSES, Parameters.TAGS)
+    label_to_index = create_label_to_index(classes=Parameters.CLASSES, tags=Parameters.TAGS)  #
+
     index_to_label = create_index_to_label(label_to_index=label_to_index)  # need to improve the variable name
+
     n_labels = create_n_labels(index_to_label)  # this is too close to the other capitalize variable name
 
     df1 = Parameters.TRAIN_DF.groupby('id')['discourse_type'].apply(list).reset_index(name='classlist')

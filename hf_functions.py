@@ -15,44 +15,56 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification, Trainin
     DataCollatorForTokenClassification
 
 
-def create_label_to_index(tags, classes):
-    """
+"""
+label_to_index, index_to_label and create_n_labels all feel similar/related. I'm currently thinking they're sub-classes.
 
-    :param tags:
-    :param classes:
-    :return:
-    """
-    for i, c in enumerate(classes):
-        tags[f'B-{c}'] = i
-        tags[f'I-{c}'] = i + len(classes)
-    tags[f'O'] = len(classes) * 2
-    tags[f'Special'] = -100
-    label_to_index = dict(tags)
-    return label_to_index
+Similarly, the various tokenizer related functions feel related like they are subclasses to a parent tokenizer class
+
+This may or may not be the right approach. would like to discuss. discuss?
+"""
 
 
-def create_index_to_labels(label_to_index):
-    """
+class LabelIndex:
+    def __init__(self):
+        self.tags = defaultdict()
+        self.classes = Parameters.CLASSES
+        self.index_to_label = defaultdict()
 
-    :param label_to_index:
-    :return:
-    """
-    index_to_label = defaultdict()
-    for k, v in label_to_index.items():
-        index_to_label[v] = k
-    index_to_label[-100] = 'Special'
-    index_to_label = dict(index_to_label)
-    return index_to_label
+    def create_label_to_index(self, tags, classes):
+        """
 
+        :param tags:
+        :param classes:
+        :return:
+        """
+        for i, c in enumerate(classes):
+            tags[f'B-{c}'] = i
+            tags[f'I-{c}'] = i + len(classes)
+        tags[f'O'] = len(classes) * 2
+        tags[f'Special'] = -100
+        label_to_index = dict(tags)
+        return label_to_index
 
-def create_n_labels(index_to_label):
-    """
+    def create_index_to_label(self, index_to_label, label_to_index):
+        """
 
-    :param index_to_label:
-    :return:
-    """
-    n_labels = len(index_to_label) - 1  # not accounting for -100
-    return n_labels
+        :param label_to_index:
+        :return:
+        """
+        for k, v in label_to_index.items():
+            index_to_label[v] = k
+        index_to_label[-100] = 'Special'
+        index_to_label = dict(index_to_label)
+        return index_to_label
+
+    def create_n_labels(self, index_to_label):
+        """
+
+        :param index_to_label:
+        :return:
+        """
+        n_labels = len(index_to_label) - 1  # not accounting for -100
+        return n_labels
 
 
 def get_raw_text(text_ids):
@@ -61,7 +73,7 @@ def get_raw_text(text_ids):
     :param text_ids:
     :return:
     """
-    with open(Config.TRAIN_DATA/f'{text_ids}.txt', 'r') as file:
+    with open(Config.TRAIN_DATA / f'{text_ids}.txt', 'r') as file:
         data = file.read()
     return data
 
@@ -129,13 +141,13 @@ def tokenize_and_align_labels(examples, max_length, tokenizer, labels_to_index, 
         max_length=max_length,
         stride=stride,
         return_overflowing_tokens=True
-        )
-    
+    )
+
     # Since one example might give us several features if it has a long context, we need a map from a feature to its
     # corresponding example. This key gives us just that.
-    
+
     sample_mapping = o["overflow_to_sample_mapping"]
-    
+
     # The offset mappings will give us a map from token to character position in the original context. This will help us
     # compute the start_positions and end_positions.
 
@@ -361,7 +373,8 @@ def pred2span(text, all_span, classes, predstrings, example_id, min_tokens, pred
     # short spans are likely to be false positives, we can choose a min number of tokens based on validation
     df = df[df.length > min_tokens].reset_index(drop=True)
     if viz:
-        visualize(df, text, colors=hf_config.COLORS, train_df=Parameters.TRAIN_DF)  # mk: problem here with circular logic
+        visualize(df, text, colors=hf_config.COLORS,
+                  train_df=Parameters.TRAIN_DF)  # mk: problem here with circular logic
     return df
 
 
@@ -394,8 +407,8 @@ def score_feedback_comp_micro(pred_df, ground_truth_df):
     """
     ground_truth_df = (
         ground_truth_df[["id", "discourse_type", "predictionstring"]]
-        .reset_index(drop=True)
-        .copy()
+            .reset_index(drop=True)
+            .copy()
     )
     pred_df = pred_df[["id", "class", "predictionstring"]].reset_index(drop=True).copy()
 
@@ -427,10 +440,10 @@ def score_feedback_comp_micro(pred_df, ground_truth_df):
     joined["max_overlap"] = joined[["overlap1", "overlap2"]].max(axis=1)
     tp_pred_ids = (
         joined.query("potential_TP")
-        .sort_values("max_overlap", ascending=False)
-        .groupby(["id", "predictionstring_gt"])
-        .first()["pred_id"]
-        .values
+            .sort_values("max_overlap", ascending=False)
+            .groupby(["id", "predictionstring_gt"])
+            .first()["pred_id"]
+            .values
     )
 
     # 3. Any unmatched ground truths are false negatives and any unmatched predictions are false positives.
@@ -463,8 +476,8 @@ def score_feedback_comp(pred_df, ground_truth_df, return_class_scores=False):
     for discourse_type, ground_truth_subset in ground_truth_df.groupby("discourse_type"):
         pred_subset = (
             pred_df.loc[pred_df["class"] == discourse_type]
-            .reset_index(drop=True)
-            .copy()
+                .reset_index(drop=True)
+                .copy()
         )
 
         class_score = score_feedback_comp_micro(pred_subset, ground_truth_subset)
