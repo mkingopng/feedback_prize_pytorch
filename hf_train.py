@@ -16,9 +16,9 @@ if __name__ == "__main__":
     wandb.login(key=API_KEY)
     wandb.init(project="feedback_prize_pytorch", entity=ENTITY)
 
-    l2i = create_l2i(Parameters.CLASSES, Parameters.TAGS)  # need to improve the variable name
-    i2l = create_i2l(l2i=l2i)  # need to improve the variable name
-    n_labels = create_n_labels(i2l)  # this is too close to the other capitalize variable name
+    label_to_index = create_label_to_index(Parameters.CLASSES, Parameters.TAGS)
+    index_to_label = create_index_to_label(label_to_index=label_to_index)  # need to improve the variable name
+    n_labels = create_n_labels(index_to_label)  # this is too close to the other capitalize variable name
 
     df1 = Parameters.TRAIN_DF.groupby('id')['discourse_type'].apply(list).reset_index(name='classlist')
     df2 = Parameters.TRAIN_DF.groupby('id')['discourse_start'].apply(list).reset_index(name='starts')
@@ -42,9 +42,9 @@ if __name__ == "__main__":
 
     o = tokenize_and_align_labels(  # Need to have a nore meaningful variable name
         max_length=TrainingHyperParameters.MAX_LENGTH,
-        l2i=l2i,
+        labels_to_index=label_to_index,  #
         tokenizer=tokenizer,
-        stride=tokenizer.stride,
+        stride=tokenizer.STRIDE,
         examples=tokenizer.examples,
     )
 
@@ -82,12 +82,16 @@ if __name__ == "__main__":
 
     p = []  # mk: Issue with p unfulfilled. Not present in notebook. try using an empty list prior to function call.
 
-    compute_metrics(p=p, i2l=i2l, metric=metric)
+    compute_metrics(
+        p=p,
+        index_to_label=index_to_label,
+        metric=metric
+    )
 
     trainer = Trainer(
         model,
         args,
-        train_dataset=tokenized_datasets["train"],
+        train_dataset=tokenized_datasets["TRAIN_DF"],
         eval_dataset=tokenized_datasets["test"],
         data_collator=data_collator,
         tokenizer=tokenizer,
@@ -106,27 +110,74 @@ if __name__ == "__main__":
 
     trainer.save_model(Config.MODEL_PATH)  #
 
-    tokenized_val = dataset.map(tokenize_for_validation, batched=True)  #
+    tokenized_val = dataset.map(
+        tokenize_for_validation,
+        batched=True
+    )  #
 
     ground_truth_df = ground_truth_for_validation(tokenized_val=tokenized_val)  #
 
     predictions, labels, _ = trainer.predict(tokenized_val['test'])
 
-    preds = np.argmax(predictions, axis=-1)
+    preds = np.argmax(
+        predictions,
+        axis=-1
+    )
 
-    predictions_0 = pred2span(preds[0], tokenized_val['test'][0], viz=True)
+    predictions_0 = pred2span(
+        preds[0],
+        tokenized_val['test'][0],
+        viz=True,
+        classes=,  #
+        example=,  #
+        example_id=,  #
+        min_tokens=,  #
+        pred=,  #
+        predstrings=  #
+    )
+
     print(predictions_0)
 
-    predictions_1 = pred2span(preds[1], tokenized_val['test'][1], viz=True)
+    predictions_1 = pred2span(
+        preds[1],
+        tokenized_val['test'][1],
+        viz=True,
+        classes=,  #
+        example=,  #
+        example_id=,  #
+        min_tokens=,  #
+        pred=,  #
+        predstrings=  #
+    )
     print(predictions_1)
 
     dfs = []
     for i in range(len(tokenized_val['test'])):
-        dfs.append(pred2span(preds[i], tokenized_val['test'][i]))
+        dfs.append(
+            pred2span(
+                preds[i],
+                tokenized_val['test'][i],
+                classes=,
+                example=,
+                example_id=,
+                min_tokens=,
+                pred=,
+                predstrings=
+            )
+        )
 
-    pred_df = pd.concat(dfs, axis=0)
+    pred_df = pd.concat(
+        dfs,
+        axis=0
+    )
+
     pred_df['class'] = pred_df['discourse_type']
+
     print(pred_df)
 
-    score_feedback_comp(pred_df=pred_df, gt_df=ground_truth_df, return_class_scores=True)
+    score_feedback_comp(
+        pred_df=pred_df,
+        ground_truth_df=ground_truth_df,
+        return_class_scores=True
+    )
 

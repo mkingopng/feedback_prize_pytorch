@@ -1,5 +1,5 @@
 epochs:
-  desc: "Number of epochs to train over"
+  desc: "Number of epochs to TRAIN_DF over"
   value: 20
 folds:
   desc: "the number of Kfolds"

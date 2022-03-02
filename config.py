@@ -13,7 +13,7 @@ class Parameters:
     MODEL_NAME = 'longformer'  # this is longformer-base-4096
     DATA_DIR = 'data'
     LOAD_TOKENS_FROM = 'longformer'
-    TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
+    TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'TRAIN_DF.csv'))
     FOLDS_DF = pd.read_csv('5_train_folds.csv')
     pre_data_dir = os.path.join('preprocessed')  # what is this used for? Can't find it in the code. delete?
     MODEL_DIR = os.path.join(f'model/{EXPERIMENT_NAME}')
@@ -27,14 +27,14 @@ class Parameters:
 
 
 class HyperParameters:
-    FOLD = 0  # the fold you want to train
+    FOLD = 0  # the fold you want to TRAIN_DF
     N_EPOCH = 20  # following Abishek's code. seems too high. I guess it doesn't matter because of early stopping
     N_FOLDS = 5  # maybe not much benefit to going beyond 5
     VERBOSE_STEPS = 500  # what does this do?
     RANDOM_SEED = 42
     MAX_LENGTH = 1024  # 4096 is model max. Some points it specifies 4096, others 1024.
-    BATCH_SIZE = 8  # 1 -8 depending on model and max_length
-    LR = 3e-5  # based on the docs, this is the default LR. How to optimize this? 3e-5, 2e-5?
+    BATCH_SIZE = 8  # 1 -8 depending on model and MAX_LENGTH
+    LR = 3e-5  # based on the docs, this is the default LEARNING_RATE. How to optimize this? 3e-5, 2e-5?
     NUM_LABELS = 15
     NUM_JOBS = 12
     LABEL_SUBTOKENS = True
@@ -114,7 +114,7 @@ class Args2:
 https://seeve.medium.com/what-is-natural-language-preprocessing-and-named-entity-recognition-how-to-do-natural-language-2b1d3140985e
 
 Architecture:
-- get base 2x base longformer to train and inference so I can score on kaggle. expect 0.68
+- get base 2x base longformer to TRAIN_DF and inference so I can score on kaggle. expect 0.68
 - can i get a better result using 2x large longformer instead of base longformer?
 - try 2x bigbird base ensemble instead of 2x longformer base?
 - what about bigbird large?
@@ -125,7 +125,7 @@ Architecture:
 Parameters
 - probability thresholds? some small changes give a lift. how to systematically determine the optimal probability thresholds?
 - NER preprocessing?
-- max_length?
+- MAX_LENGTH?
 - tokenizer = can i used a different tokenizer to improve my performance?
 - can i use a dictionary to augment the tokenizer to deal with spelling, punctuation and grammar errors?
 - NER post processing & link-evidence simplified?

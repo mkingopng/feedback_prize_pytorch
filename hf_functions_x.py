@@ -1,5 +1,5 @@
 """
-I'm going to be really ambitious and try to write something from scratch using huggingface and pytorch
+
 
 https://huggingface.co/transformers/v3.0.2/notebooks.html
 https://github.com/patil-suraj/Notebooks/blob/master/longformer_qa_training.ipynb
@@ -93,7 +93,7 @@ def convert_to_features(example):
     return encodings
 
 
-# load train and validation split of squad
+# load TRAIN_DF and validation split of squad
 train_dataset = nlp.load_dataset('squad', split=nlp.Split.TRAIN)
 valid_dataset = nlp.load_dataset('squad', split=nlp.Split.VALIDATION)
 
@@ -144,7 +144,7 @@ class ModelArguments:
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None, metadata={"help": "Pretrained tokenizer name or TRAIN_DIR if not the same as model_name"}
     )
     cache_dir: Optional[str] = field(
         default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3"}
@@ -158,7 +158,7 @@ class DataTrainingArguments:
     """
     train_file_path: Optional[str] = field(
         default='train_data.pt',
-        metadata={"help": "Path for cached train dataset"},
+        metadata={"help": "Path for cached TRAIN_DF dataset"},
     )
     valid_file_path: Optional[str] = field(
         default='valid_data.pt',
