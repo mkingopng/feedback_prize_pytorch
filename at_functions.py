@@ -20,7 +20,7 @@ from sklearn import metrics
 from transformers import AdamW, AutoConfig, AutoModel, AutoTokenizer, get_cosine_schedule_with_warmup
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
-from config import *
+from at_config import *
 
 
 def split(df):
@@ -56,9 +56,9 @@ def split(df):
 #     :return:
 #     """
 #     test_names, train_texts = [], []
-#     for f in tqdm(list(os.listdir('data/TRAIN_DF'))):
+#     for f in tqdm(list(os.listdir('data/train'))):
 #         test_names.append(f.replace('.txt', ''))
-#         train_texts.append(open('data/TRAIN_DF/' + f, 'r').read())
+#         train_texts.append(open('data/train/' + f, 'r').read())
 #     train_text_df = pd.DataFrame({'id': test_names, 'text': train_texts})
 #     return train_text_df
 #
@@ -100,7 +100,7 @@ def _prepare_training_data_helper(args, tokenizer, df, train_ids):
     """
     training_samples = []
     for idx in tqdm(train_ids):
-        filename = os.path.join(args.input, "TRAIN_DF", f'{idx}.txt')
+        filename = os.path.join(args.input, "train", f'{idx}.txt')
         with open(filename, "r") as f:
             text = f.read()
         encoded_text = tokenizer.encode_plus(text, add_special_tokens=False, return_offsets_mapping=True)
@@ -257,7 +257,7 @@ class FeedbackDatasetValid:
         # add end token id to the input_ids
         input_ids = input_ids + [self.tokenizer.sep_token_id]
         attention_mask = [1] * len(input_ids)
-        return {"text_ids": input_ids, "mask": attention_mask}
+        return {"ids": input_ids, "mask": attention_mask}
 
 
 class Collate:
@@ -275,22 +275,22 @@ class Collate:
         :return:
         """
         output = dict()
-        output["text_ids"] = [sample["text_ids"] for sample in batch]
+        output["ids"] = [sample["ids"] for sample in batch]
         output["mask"] = [sample["mask"] for sample in batch]
 
         # calculate max token length of this batch
-        batch_max = max([len(ids) for ids in output["text_ids"]])
+        batch_max = max([len(ids) for ids in output["ids"]])
 
         # add padding
         if self.tokenizer.padding_side == "right":
-            output["text_ids"] = [s + (batch_max - len(s)) * [self.tokenizer.pad_token_id] for s in output["text_ids"]]
+            output["ids"] = [s + (batch_max - len(s)) * [self.tokenizer.pad_token_id] for s in output["ids"]]
             output["mask"] = [s + (batch_max - len(s)) * [0] for s in output["mask"]]
         else:
-            output["text_ids"] = [(batch_max - len(s)) * [self.tokenizer.pad_token_id] + s for s in output["text_ids"]]
+            output["ids"] = [(batch_max - len(s)) * [self.tokenizer.pad_token_id] + s for s in output["ids"]]
             output["mask"] = [(batch_max - len(s)) * [0] + s for s in output["mask"]]
 
         # convert to tensors
-        output["text_ids"] = torch.tensor(output["text_ids"], dtype=torch.long)
+        output["ids"] = torch.tensor(output["ids"], dtype=torch.long)
         output["mask"] = torch.tensor(output["mask"], dtype=torch.long)
         return output
 
@@ -412,7 +412,7 @@ class EarlyStopping(Callback):
 
         scr = score_feedback_comp(submission, self.valid_df, return_class_scores=True)
         print(scr)
-        model.TRAIN_DF()
+        model.train()
 
         epoch_score = scr[0]
         if self.mode == "min":
@@ -522,7 +522,7 @@ class FeedbackDataset:
                 attention_mask = [0] * padding_length + attention_mask  # to here
 
         return {
-            "text_ids": torch.tensor(input_ids, dtype=torch.long),
+            "ids": torch.tensor(input_ids, dtype=torch.long),
             "mask": torch.tensor(attention_mask, dtype=torch.long),
             "targets": torch.tensor(input_labels, dtype=torch.long),
         }

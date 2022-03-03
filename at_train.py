@@ -3,8 +3,8 @@
 """
 import gc
 import wandb
-from config import *
-from functions import *
+from at_config import *
+from at_functions import *
 from wandb_creds import *
 
 warnings.filterwarnings("ignore")

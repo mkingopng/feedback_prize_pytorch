@@ -14,8 +14,8 @@ class Config:
     STRIDE = 128  #
     MIN_TOKENS = 6  #
     MODEL_PATH = f'{MODEL_CHECKPOINT.split("/")[-1]}-{EXP_NUM}'  #
-    DATA_DIR = 'data'  #
-    TRAIN_DATA = os.path.join('data', 'TRAIN_DF')  #
+    DATA_DIR = '../data'  #
+    TRAIN_DATA = os.path.join('../data', 'TRAIN_DF')  #
     SAMPLE = False  # set True for debugging
     DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")  # use GPU
 

@@ -5,15 +5,9 @@ import hf_config
 from hf_config import *
 import numpy as np
 import pandas as pd
-import os
-from pathlib import Path
-import spacy
 from spacy import displacy
-from pylab import cm, matplotlib
-from datasets import Dataset, load_metric
-from transformers import AutoTokenizer, AutoModelForTokenClassification, TrainingArguments, Trainer, \
-    DataCollatorForTokenClassification
-
+from datasets import Dataset
+from transformers import AutoTokenizer
 
 """
 label_to_index, index_to_label and create_n_labels all feel similar/related. I'm currently thinking they're sub-classes.
