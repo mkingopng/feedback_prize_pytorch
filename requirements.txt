@@ -6,7 +6,7 @@
 #
 argparse==1.4.0
     # via feedback-prize (setup.py)
-blis==0.7.5
+blis==0.7.6
     # via
     #   spacy
     #   thinc
@@ -115,7 +115,7 @@ pyyaml==6.0
     #   huggingface-hub
     #   transformers
     #   wandb
-regex==2022.1.18
+regex==2022.3.2
     # via
     #   nltk
     #   sacremoses
@@ -151,7 +151,7 @@ smart-open==5.2.1
     # via pathy
 smmap==5.0.0
     # via gitdb
-spacy==3.2.2
+spacy==3.2.3
     # via feedback-prize (setup.py)
 spacy-legacy==3.0.9
     # via spacy
@@ -194,7 +194,7 @@ urllib3==1.26.8
     # via
     #   requests
     #   sentry-sdk
-wandb==0.12.10
+wandb==0.12.11
     # via feedback-prize (setup.py)
 wasabi==0.9.0
     # via
@@ -208,9 +208,13 @@ yaspin==2.1.0
 # setuptools
 
 pillow~=9.0.1
+
 tensorboard~=2.8.0
+
 setuptools~=60.9.3
+
 dataclasses~=0.8
+
 sentencepiece~=0.1.96
-datasets==1.18.3
+
 nlp~=0.4.0
