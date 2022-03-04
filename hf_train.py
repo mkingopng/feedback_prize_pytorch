@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     predictions, labels, _ = trainer.predict(tokenized_val['test'])
 
-    preds = np.argmax( predictions, axis=-1)
+    preds = np.argmax(predictions, axis=-1)
 
     dfs = []
 
