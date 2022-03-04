@@ -32,7 +32,7 @@ class _IncompatibleKeys(namedtuple('IncompatibleKeys', ['missing_keys', 'unexpec
 
 
 def _addindent(s_, numSpaces):
-    s = s_.split('\n')
+    s = s_.kfolds_split('\n')
     # don't do anything for single-line stuff
     if len(s) == 1:
         return s_
@@ -1352,7 +1352,7 @@ class Module:
             for key in state_dict.keys():
                 if key.startswith(prefix):
                     input_name = key[len(prefix):]
-                    input_name = input_name.split('.', 1)[0]  # get the name of param/buffer/child
+                    input_name = input_name.kfolds_split('.', 1)[0]  # get the name of param/buffer/child
                     if input_name not in self._modules and input_name not in local_state:
                         unexpected_keys.append(key)
 

@@ -2,8 +2,17 @@
 
 """
 import wandb
+from hf_config import *
 from hf_functions import *
 from wandb_creds import *
+from datasets import Dataset, load_metric
+from transformers import (
+    AutoModelForTokenClassification,
+    TrainingArguments,
+    Trainer,
+    DataCollatorForTokenClassification,
+
+)
 
 SAMPLE = False  # set True for debugging
 
@@ -15,33 +24,27 @@ if __name__ == "__main__":
     # wandb.login(key=API_KEY)
     # wandb.init(project="feedback_prize_pytorch", entity=ENTITY)
 
-    label_to_index = create_label_to_index(classes=Parameters.CLASSES, tags=Parameters.TAGS)  #
+    label_to_index = label_to_index(classes=Config.CLASSES, tags=Config.TAGS)  #
 
-    index_to_label = create_index_to_label(label_to_index=label_to_index)  # need to improve the variable name
+    index_to_label = index_to_label(label_to_index=label_to_index, index_to_label=index_to_label)
 
-    n_labels = create_n_labels(index_to_label)  # this is too close to the other capitalize variable name
+    n_labels = create_n_labels(index_to_label=index_to_label)  # mk: this is too close to the capitalized constant name
 
-    df1 = Parameters.TRAIN_DF.groupby('id')['discourse_type'].apply(list).reset_index(name='classlist')
-    df2 = Parameters.TRAIN_DF.groupby('id')['discourse_start'].apply(list).reset_index(name='starts')
-    df3 = Parameters.TRAIN_DF.groupby('id')['discourse_end'].apply(list).reset_index(name='ends')
-    df4 = Parameters.TRAIN_DF.groupby('id')['predictionstring'].apply(list).reset_index(name='predictionstrings')
+    data = get_raw_text(text_ids=str, path=Config.path)
 
-    df = pd.merge(df1, df2, how='inner', on='id')
-    df = pd.merge(df, df3, how='inner', on='id')
-    df = pd.merge(df, df4, how='inner', on='id')
-    df['text'] = df['id'].apply(get_raw_text)
+    processed_df = preprocess_text(df=Config.TRAIN_DATA)
 
     # debugging
     if SAMPLE: 
-        df = df.sample(n=100).reset_index(drop=True)
+        df = Config.TRAIN_DATA.sample(n=100).reset_index(drop=True)
 
-    dataset = dataset(df)
+    dataset = dataset(df=processed_df)
 
-    tokenizer = set_tokenizer(Config.MODEL_CHECKPOINT)
+    tokenizer = get_tokenizer(Config.MODEL_CHECKPOINT, add_prefix_space=True)
 
     fix_beginnings(Parameters.E)
 
-    o = tokenize_and_align_labels(  # Need to have a nore meaningful variable name
+    o = tokenize_and_align_labels(  # FIX_ME: Need to have a nore meaningful variable name
         max_length=TrainingHyperParameters.MAX_LENGTH,
         labels_to_index=label_to_index,  #
         tokenizer=tokenizer,
@@ -51,7 +54,8 @@ if __name__ == "__main__":
 
     tokenized_datasets = tokenize_datasets(
         batch_size=Parameters.BATCH_SIZE,
-        datasets=dataset
+        datasets=dataset,
+        tokenize_and_align_labels=o,
     )
 
     model = AutoModelForTokenClassification.from_pretrained(
@@ -59,7 +63,7 @@ if __name__ == "__main__":
         num_labels=n_labels
     )
 
-    model_name = Config.MODEL_CHECKPOINT.split("/")[-1]
+    model_name = Config.MODEL_CHECKPOINT.kfolds_split("/")[-1]
 
     args = TrainingArguments(
         f"{model_name}-finetuned-{Config.TASK}",
@@ -78,7 +82,7 @@ if __name__ == "__main__":
 
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
-    # this is not the competition metric, but for now this will be better than nothing...
+    # FIX_ME: this is not the competition metric, but for now this will be better than nothing...
     metric = load_metric("seqeval")
 
     p = []  # mk: Issue with p unfulfilled. Not present in notebook. try using an empty list prior to function call.
@@ -101,76 +105,39 @@ if __name__ == "__main__":
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")  # use the GPU
 
-    wandb.log()  # new addition
+    wandb.watch(model)  # mk: new addition
 
-    wandb.watch(model)  # new addition
+    trainer.train()  # mk: this needs to be refactored into a for loop to allow for Kfolds
 
-    trainer.train()  #
+    wandb.log()  # mk: new addition
 
     wandb.finish()  #
 
-    trainer.save_model(Config.MODEL_PATH)  #
+    trainer.save_model(Config.MODEL_PATH)  # mk: need to save as weights not model. one set of saved weights per fold
 
-    tokenized_val = dataset.map(
-        tokenize_for_validation,
-        batched=True
-    )  #
+    tokenized_val = dataset.map(tokenize_for_validation, batched=True)  #
 
     ground_truth_df = ground_truth_for_validation(tokenized_val=tokenized_val)  #
 
     predictions, labels, _ = trainer.predict(tokenized_val['test'])
 
-    preds = np.argmax(
-        predictions,
-        axis=-1
-    )
-
-    predictions_0 = pred2span(
-        preds[0],
-        tokenized_val['test'][0],
-        viz=True,
-        classes=,  #
-        example=,  #
-        example_id=,  #
-        min_tokens=,  #
-        pred=,  #
-        predstrings=  #
-    )
-
-    print(predictions_0)
-
-    predictions_1 = pred2span(
-        preds[1],
-        tokenized_val['test'][1],
-        viz=True,
-        classes=,  #
-        example=,  #
-        example_id=,  #
-        min_tokens=,  #
-        pred=,  #
-        predstrings=  #
-    )
-    print(predictions_1)
+    preds = np.argmax( predictions, axis=-1)
 
     dfs = []
+
     for i in range(len(tokenized_val['test'])):
         dfs.append(
-            pred2span(
+            pred_to_span(
                 preds[i],
                 tokenized_val['test'][i],
-                classes=,
-                example=,
-                example_id=,
-                min_tokens=,
-                pred=,
-                predstrings=
+                classes=Config.CLASSES,
+                example_id=,  # FIX_ME: needs a value
+                min_tokens=Config.MIN_TOKENS,
+                visualize=visualize
             )
         )
 
-    pred_df = pd.concat(
-        dfs,
-        axis=0
-    )
+    pred_df = pd.concat(dfs, axis=0)
 
     pred_df['class'] = pred_df['discourse_type']
 
@@ -179,6 +146,7 @@ if __name__ == "__main__":
     score_feedback_comp(
         pred_df=pred_df,
         ground_truth_df=ground_truth_df,
-        return_class_scores=True
+        return_class_scores=True,
+        score_feedback_comp_micro=,  # FIX_ME: needs a value
     )
 

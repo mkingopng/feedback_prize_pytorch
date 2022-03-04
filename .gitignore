@@ -197,3 +197,4 @@ eda-notebooks/
 /longformer-base-4096-hf-finetuned-ner/
 /longformer-base-4096-hf-1/
 /datasets/
+/hf_approach/wandb/

@@ -18,20 +18,19 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Mapping, Union
 import numpy as np
 from collections import OrderedDict
+from collections import Counter
 import pandas as pd
 import json
-
-from collections import Counter
 import string
 import re
 import argparse
 import sys
 
-from transformers import LongformerConfig
-from transformers import LongformerModel
-from transformers import LongformerTokenizerFast
-from transformers import EvalPrediction
 from transformers import (
+    LongformerConfig,
+    LongformerModel,
+    LongformerTokenizerFast,
+    EvalPrediction,
     HfArgumentParser,
     DataCollator,
     Trainer,
@@ -308,7 +307,7 @@ def normalize_answer(s):
         return re.sub(r'\b(a|an|the)\b', ' ', text)
 
     def white_space_fix(text):
-        return ' '.join(text.split())
+        return ' '.join(text.kfolds_split())
 
     def remove_punc(text):
         exclude = set(string.punctuation)

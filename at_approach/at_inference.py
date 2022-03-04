@@ -3,8 +3,8 @@ this should yield about 0.689 - 0.690 using abishek's checkpoints and probabilit
 """
 
 
-from functions import *
-from config import *
+from at_functions import *
+from at_config import *
 import gc
 
 if __name__ == "__main__":
@@ -132,9 +132,9 @@ if __name__ == "__main__":
 
         temp_df = []
         for phrase_idx, (phrase, start, end, label, phrase_scores) in enumerate(phrase_preds):
-            word_start = len(sample_text[:start].split())
-            word_end = word_start + len(sample_text[start:end].split())
-            word_end = min(word_end, len(sample_text.split()))
+            word_start = len(sample_text[:start].kfolds_split())
+            word_end = word_start + len(sample_text[start:end].kfolds_split())
+            word_end = min(word_end, len(sample_text.kfolds_split()))
             ps = " ".join([str(x) for x in range(word_start, word_end)])
             if label != "O":
                 if sum(phrase_scores) / len(phrase_scores) >= Targets.proba_thresh[label]:

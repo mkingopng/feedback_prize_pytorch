@@ -23,7 +23,7 @@ from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from at_config import *
 
 
-def split(df):
+def split(df):  # mk: i need this
     """
     split using multi-stratification. Presently scikit-learn provides several cross validators with stratification.
     However, these cross validators do not offer the ability to stratify multilabel data. This iterative-stratification
@@ -48,45 +48,6 @@ def split(df):
     print(df.kfold.value_counts())  #
     df.to_csv(f"{HyperParameters.N_FOLDS}_train_folds.csv", index=False)  #
     return df
-
-#
-# def train_text_dataframe():
-#     """
-#     # https://www.kaggle.com/raghavendrakotala/fine-tunned-on-roberta-base-as-ner-problem-0-533
-#     :return:
-#     """
-#     test_names, train_texts = [], []
-#     for f in tqdm(list(os.listdir('data/train'))):
-#         test_names.append(f.replace('.txt', ''))
-#         train_texts.append(open('data/train/' + f, 'r').read())
-#     train_text_df = pd.DataFrame({'id': test_names, 'text': train_texts})
-#     return train_text_df
-#
-#
-# def NER_labels(train_text_df):
-#     """
-#     Chris Deotte https://www.kaggle.com/michaelkingston/pytorch-bigbird-ner-cv-0-615
-#     :return:
-#     """
-#     if not Parameters.LOAD_TOKENS_FROM:
-#         all_entities = []
-#         for ii, i in enumerate(train_text_df.iterrows()):
-#             if ii % 100 == 0: print(ii, ', ', end='')
-#             total = i[1]['text'].split().__len__()
-#             entities = ["O"] * total
-#             for j in Parameters.TRAIN_DF[Parameters.TRAIN_DF['id'] == i[1]['id']].iterrows():
-#                 discourse = j[1]['discourse_type']
-#                 list_ix = [int(x) for x in j[1]['predictionstring'].split(' ')]
-#                 entities[list_ix[0]] = f"B-{discourse}"
-#                 for k in list_ix[1:]: entities[k] = f"I-{discourse}"
-#             all_entities.append(entities)
-#         train_text_df['entities'] = all_entities
-#         train_text_df.to_csv('train_NER.csv', index=False)
-#
-#     else:
-#         train_text_df = pd.read_csv(f'{Parameters.LOAD_TOKENS_FROM}/train_NER.csv')
-#         # pandas saves lists as string, we must convert back
-#         train_text_df.entities = train_text_df.entities.apply(lambda x: literal_eval(x))
 
 
 def _prepare_training_data_helper(args, tokenizer, df, train_ids):
@@ -134,7 +95,7 @@ def _prepare_training_data_helper(args, tokenizer, df, train_ids):
     return training_samples
 
 
-def prepare_training_data(df, tokenizer, args, num_jobs):
+def prepare_training_data(df, tokenizer, args, num_jobs):  # mk: do i need this?
     """
 
     :param df:
@@ -153,7 +114,7 @@ def prepare_training_data(df, tokenizer, args, num_jobs):
     return training_samples
 
 
-def calc_overlap(row):
+def calc_overlap(row):  # mk: this is included in the ScoreFeedbackCompetition class. feeds score_comp_micro
     """
     Calculates the overlap between prediction and ground truth and overlap percentages used for determining true
     positives. This code is from Rob Mulla's @robikscube notebook,
@@ -161,8 +122,8 @@ def calc_overlap(row):
     :param row:
     :return:
     """
-    set_pred = set(row.predictionstring_pred.split(" "))
-    set_gt = set(row.predictionstring_gt.split(" "))
+    set_pred = set(row.predictionstring_pred.kfolds_split(" "))
+    set_gt = set(row.predictionstring_gt.kfolds_split(" "))
     # Length of each and intersection
     len_gt = len(set_gt)
     len_pred = len(set_pred)
@@ -383,9 +344,9 @@ class EarlyStopping(Callback):
 
             temp_df = []
             for phrase_idx, (phrase, start, end, label, phrase_scores) in enumerate(phrase_preds):
-                word_start = len(sample_text[:start].split())
-                word_end = word_start + len(sample_text[start:end].split())
-                word_end = min(word_end, len(sample_text.split()))
+                word_start = len(sample_text[:start].kfolds_split())
+                word_end = word_start + len(sample_text[start:end].kfolds_split())
+                word_end = min(word_end, len(sample_text.kfolds_split()))
                 ps = " ".join([str(x) for x in range(word_start, word_end)])
                 if label != "O":
                     if sum(phrase_scores) / len(phrase_scores) >= Targets.proba_thresh[label]:
@@ -396,7 +357,7 @@ class EarlyStopping(Callback):
             submission.append(temp_df)
 
         submission = pd.concat(submission).reset_index(drop=True)
-        submission["len"] = submission.predictionstring.apply(lambda x: len(x.split()))
+        submission["len"] = submission.predictionstring.apply(lambda x: len(x.kfolds_split()))
 
         def threshold(df):
             df = df.copy()
@@ -771,7 +732,7 @@ def link_evidence(oof):
                     continue
                 pst = []
                 for i, r in q.iterrows():
-                    pst = pst + [-1] + [int(x) for x in r['predictionstring'].split()]
+                    pst = pst + [-1] + [int(x) for x in r['predictionstring'].kfolds_split()]
                 start = 1
                 end = 1
                 for i in range(2, len(pst)):
