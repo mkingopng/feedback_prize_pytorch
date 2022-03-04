@@ -5,19 +5,17 @@ import wandb
 from hf_config import *
 from hf_functions import *
 from wandb_creds import *
+from torch import cuda
+import gc
 from datasets import Dataset, load_metric
 from transformers import (
     AutoModelForTokenClassification,
     TrainingArguments,
     Trainer,
     DataCollatorForTokenClassification,
-
 )
 
 SAMPLE = False  # set True for debugging
-
-# setup wandb for experiment tracking
-# source: https://www.kaggle.com/debarshichanda/pytorch-w-b-jigsaw-starter
 
 
 if __name__ == "__main__":
@@ -40,11 +38,14 @@ if __name__ == "__main__":
 
     dataset = dataset(df=processed_df)
 
-    tokenizer = get_tokenizer(Config.MODEL_CHECKPOINT, add_prefix_space=True)
+    tokenizer = get_tokenizer(
+        Config.MODEL_CHECKPOINT,
+        add_prefix_space=True
+    )
 
     fix_beginnings(Parameters.E)
 
-    o = tokenize_and_align_labels(  # FIX_ME: Need to have a nore meaningful variable name
+    o = tokenize_and_align_labels(  # FIX_ME: Need to have a nore meaningful variable name than o
         max_length=TrainingHyperParameters.MAX_LENGTH,
         labels_to_index=label_to_index,  #
         tokenizer=tokenizer,
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         examples=tokenizer.examples,
     )
 
-    tokenized_datasets = tokenize_datasets(
+    tokenized_datasets = map_datasets(
         batch_size=Parameters.BATCH_SIZE,
         datasets=dataset,
         tokenize_and_align_labels=o,
@@ -69,7 +70,7 @@ if __name__ == "__main__":
         f"{model_name}-finetuned-{Config.TASK}",
         evaluation_strategy="epoch",
         logging_strategy="epoch",
-        save_strategy="epoch",
+        save_strategy="epoch",  # mk: read the docs on this. I don't like how its saving right now.
         learning_rate=TrainingHyperParameters.LEARNING_RATE,
         per_device_train_batch_size=TrainingHyperParameters.BATCH_SIZE,
         per_device_eval_batch_size=TrainingHyperParameters.BATCH_SIZE,
@@ -82,8 +83,7 @@ if __name__ == "__main__":
 
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
-    # FIX_ME: this is not the competition metric, but for now this will be better than nothing...
-    metric = load_metric("seqeval")
+    metric = load_metric("seqeval")  # FIX_ME: not the competition metric, but for now its be better than nothing...
 
     p = []  # mk: Issue with p unfulfilled. Not present in notebook. try using an empty list prior to function call.
 
@@ -131,7 +131,6 @@ if __name__ == "__main__":
                 preds[i],
                 tokenized_val['test'][i],
                 classes=Config.CLASSES,
-                example_id=,  # FIX_ME: needs a value
                 min_tokens=Config.MIN_TOKENS,
                 visualize=visualize
             )
@@ -143,10 +142,12 @@ if __name__ == "__main__":
 
     print(pred_df)
 
-    score_feedback_comp(
+    final_score = score_feedback_comp(
         pred_df=pred_df,
         ground_truth_df=ground_truth_df,
         return_class_scores=True,
-        score_feedback_comp_micro=,  # FIX_ME: needs a value
-    )
+        score_feedback_comp_micro=score_feedback_comp_micro
+    )  # mk: does this make sense? seems very circular and self-referential
 
+    torch.cuda.empty_cache()
+    gc.collect()

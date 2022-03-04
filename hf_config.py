@@ -39,6 +39,7 @@ class TrainingHyperParameters:
     MAX_LENGTH = 1024  # mk: need to optimize this w/ wandb sweeps
     N_FOLDS = 5  # mk: include this using at-approach methods
     STRIDE = 128  # mk: need to optimize this w/ wandb sweeps
+    SEED = 42
 
 
 COLORS = {

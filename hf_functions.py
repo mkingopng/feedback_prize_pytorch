@@ -6,9 +6,7 @@ import numpy as np
 import pandas as pd
 from spacy import displacy
 from datasets import Dataset
-
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
-
 from transformers import AutoTokenizer
 
 """
@@ -18,31 +16,49 @@ make it work with bare functions now, then look at classes, methods & decorators
 """
 
 
-def kfolds_split(df):
+def kfolds_split(train_df):
     """
     split using multi-stratification. Presently scikit-learn provides several cross validators with stratification.
     However, these cross validators do not offer the ability to stratify multilabel data. This iterative-stratification
     project offers implementations of MultilabelStratifiedKFold, MultilabelRepeatedStratifiedKFold, and
     MultilabelStratifiedShuffleSplit with a base algorithm for stratifying multilabel data.
-    https://github.com/trent-b/iterative-stratification. This is largely unchanged from Abishek's code.
-    :param df: the training data to be split
-    :return: multilabel stratified Kfolds
+    https://github.com/trent-b/iterative-stratification.
+    :param train_df: the training data to be split
+    :return: multilabel stratified Kfolds df & csv
     """
-    df = Parameters.TRAIN_DF
-    dfx = pd.get_dummies(df, columns=["discourse_type"]).groupby(["id"], as_index=False).sum()  #
-    cols = [c for c in dfx.columns if c.startswith("discourse_type_") or c == "id" and c != "discourse_type_num"]
-    dfx = dfx[cols]
-    mskf = MultilabelStratifiedKFold(n_splits=TrainingHyperParameters.N_FOLDS, shuffle=True, random_state=42)  #
-    labels = [c for c in dfx.columns if c != "id"]
-    dfx_labels = dfx[labels]  #
-    dfx["kfold"] = -1  #
-    for fold, (trn_, val_) in enumerate(mskf.split(dfx, dfx_labels)):
+    train_df = Config.TRAIN_DF
+
+    temp_df = pd.get_dummies(train_df, columns=["discourse_type"]).groupby(["id"], as_index=False).sum()  #
+
+    cols = [c for c in temp_df.columns if c.startswith("discourse_type_") or c == "id" and c != "discourse_type_num"]
+
+    temp_df = temp_df[cols]
+
+    multilabel_stratified_kfold = MultilabelStratifiedKFold(
+        n_splits=TrainingHyperParameters.N_FOLDS,
+        shuffle=True,
+        random_state=42
+    )  #
+
+    labels = [c for c in temp_df.columns if c != "id"]
+
+    temp_df_labels = temp_df[labels]  #
+
+    temp_df["kfold"] = -1  #
+
+    for fold, (trn_, val_) in enumerate(multilabel_stratified_kfold.split(temp_df, temp_df_labels)):
+
         print(len(trn_), len(val_))  #
-        dfx.loc[val_, "kfold"] = fold  #
-    df = df.merge(dfx[["id", "kfold"]], on="id", how="left")  #
-    print(df.kfold.value_counts())  #
-    df.to_csv(f"{TrainingHyperParameters.N_FOLDS}_train_folds.csv", index=False)  #
-    return df
+
+        temp_df.loc[val_, "kfold"] = fold  #
+
+    kfolds_df = train_df.merge(temp_df[["id", "kfold"]], on="id", how="left")  #
+
+    print(kfolds_df.kfold.value_counts())  #
+
+    kfolds_df.to_csv(f"{TrainingHyperParameters.N_FOLDS}_train_folds.csv", index=False)  #
+
+    return kfolds_df
 
 
 # class PreProcessing:
@@ -64,11 +80,17 @@ def label_to_index(tags, classes):
     :return:
     """
     for i, c in enumerate(classes):
+
         tags[f'B-{c}'] = i
+
         tags[f'I-{c}'] = i + len(classes)
+
     tags[f'O'] = len(classes) * 2
+
     tags[f'Special'] = -100
+
     label_to_index = dict(tags)
+
     return label_to_index
 
 
@@ -80,9 +102,13 @@ def index_to_label(index_to_label, label_to_index):
     :return:
     """
     for k, v in label_to_index.items():
+
         index_to_label[v] = k
+
     index_to_label[-100] = 'Special'
+
     index_to_label = dict(index_to_label)
+
     return index_to_label
 
 
@@ -93,6 +119,7 @@ def create_n_labels(index_to_label):
     :return:
     """
     n_labels = len(index_to_label) - 1  # not accounting for -100
+
     return n_labels
 
 
@@ -103,19 +130,34 @@ def get_raw_text(text_ids, path):
     :param path:
     :return:
     """
+
     with open(path / f'{text_ids}.txt', 'r') as file:
+
         data = file.read()
+
     return data
 
 
 def preprocess_text(df):
+    """
+
+    :param df:
+    :return:
+    """
     df1 = df.groupby('id')['discourse_type'].apply(list).reset_index(name='classlist')
+
     df2 = df.groupby('id')['discourse_start'].apply(list).reset_index(name='starts')
+
     df3 = df.groupby('id')['discourse_end'].apply(list).reset_index(name='ends')
+
     df4 = df.groupby('id')['predictionstring'].apply(list).reset_index(name='predictionstrings')
+
     df = pd.merge(df1, df2, how='inner', on='id')
+
     df = pd.merge(df, df3, how='inner', on='id')
+
     df = pd.merge(df, df4, how='inner', on='id')
+
     df['text'] = df['id'].apply(get_raw_text)
 
 
@@ -132,11 +174,13 @@ def dataset(df):
     :return:
     """
     ds = Dataset.from_pandas(df)
+
     datasets = ds.train_test_split(
         test_size=0.1,
         shuffle=True,
-        seed=42
+        seed=TrainingHyperParameters.SEED
     )
+
     return datasets
 
 
@@ -241,7 +285,7 @@ def tokenize_and_align_labels(examples, max_length, tokenizer, labels_to_index, 
     return o
 
 
-def tokenize_datasets(datasets, batch_size, tokenize_and_align_labels):
+def map_datasets(datasets, batch_size, tokenize_and_align_labels):
     """
 
     :param datasets:
@@ -259,14 +303,13 @@ def tokenize_datasets(datasets, batch_size, tokenize_and_align_labels):
 
 def compute_metrics(p, index_to_label, metric):
     """
-    this is currently not the right metric. it's a placeholder
-    i don't like the 'l' variable name
+    this is currently not the right metric. it's a placeholder i don't like the 'l' variable name
     :param p:
     :param index_to_label:
     :param metric:
     :return:
     """
-    predictions, labels = p  # mk: gotta rename o, p and l variables.
+    predictions, labels = p  # mk: rename e, i, k, o, p and l variables.
 
     predictions = np.argmax(predictions, axis=2)
 
@@ -383,7 +426,7 @@ def visualize(df, text, colors, train_df):
     :param train_df:
     :return:
     """
-    ents = []
+    ents = []  # mk: does this mean entities?
 
     example = df['id'].loc[0]
 
@@ -401,8 +444,19 @@ def visualize(df, text, colors, train_df):
         "ents": ents,
         "title": example
     }
-    options = {"ents": train_df.discourse_type.unique().tolist() + ['Other'], "colors": colors}
-    displacy.render(doc2, style="ent", options=options, manual=True, jupyter=False)
+
+    options = {
+        "ents": train_df.discourse_type.unique().tolist() + ['Other'],
+        "colors": colors
+    }
+
+    displacy.render(
+        doc2,
+        style="ent",
+        options=options,
+        manual=True,
+        jupyter=False
+    )
 
 
 # class ScoreFeedbackCompetition:
@@ -426,14 +480,13 @@ def get_class(c, index_to_label):
         return index_to_label[c][2:]
 
 
-def pred_to_span(text, all_span, classes, visualize, example_id, min_tokens, viz=False):
+def pred_to_span(text, all_span, classes, visualize, min_tokens, viz=False):
     """
 
     :param text:
     :param all_span:
     :param classes:
     :param visualize:
-    :param example_id:
     :param min_tokens:
     :param viz:
     :return:
@@ -471,7 +524,7 @@ def pred_to_span(text, all_span, classes, visualize, example_id, min_tokens, viz
 
     for c, span, predstring in zip(classes, all_span, predstrings):
         e = {
-            'id': example_id,
+            'id': example_id,  # fix_me
             'discourse_type': c,
             'predictionstring': predstring,
             'discourse_start': span[0],
@@ -506,14 +559,19 @@ def calc_overlap(row):
     :return:
     """
     set_pred = set(row.predictionstring_pred.kfolds_split(" "))
+
     set_ground_truth = set(row.predictionstring_gt.kfolds_split(" "))
 
-    # Length of each and intersection
-    len_ground_truth = len(set_ground_truth)
+    len_ground_truth = len(set_ground_truth)  # Length of each and intersection
+
     len_pred = len(set_pred)
+
     inter = len(set_ground_truth.intersection(set_pred))
+
     overlap_1 = inter / len_ground_truth
+
     overlap_2 = inter / len_pred
+
     return [overlap_1, overlap_2]
 
 
@@ -596,6 +654,7 @@ def score_feedback_comp(pred_df, ground_truth_df, score_feedback_comp_micro, ret
     pred_df = pred_df[["id", "class", "predictionstring"]].reset_index(drop=True).copy()
 
     for discourse_type, ground_truth_subset in ground_truth_df.groupby("discourse_type"):
+
         pred_subset = (pred_df.loc[pred_df["class"] == discourse_type].reset_index(drop=True).copy())
 
         class_score = score_feedback_comp_micro(pred_subset, ground_truth_subset)
@@ -605,6 +664,7 @@ def score_feedback_comp(pred_df, ground_truth_df, score_feedback_comp_micro, ret
     f1 = np.mean([v for v in class_scores.values()])
 
     if return_class_scores:
+
         return f1, class_scores
 
     return f1
