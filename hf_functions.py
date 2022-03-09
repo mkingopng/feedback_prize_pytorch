@@ -8,6 +8,12 @@ from spacy import displacy
 from datasets import Dataset
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from transformers import AutoTokenizer
+from wasabi import tables
+import cymem
+import preshed
+import blis
+# fix_me: why is this showing as blis not installed? requirements.txt it shows installed. pip install shows it installed
+
 
 """
 What  we we need?

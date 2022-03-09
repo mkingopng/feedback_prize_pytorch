@@ -1,0 +1,74 @@
+
+feedback Prize notes
+
+what I like:
+	- it delivers a good result without much complexity. I think that makes it a good base to build on
+	- it works on longformer-large
+	- it integrates well with wandb
+	- its quite fast compared to at-approach, but thats probably because only 1 fold, 5 epochs.
+	- 
+
+
+what I don't like:
+	- a number of variables have crap names that don't make sense to me and are nto descriptive
+	- strange functions that are not clear and don't have documentation yet
+	- no kfolds yet. Including kfolds should improve performance. OFI?
+	- the method of saving checkpoints is weird. Don't understand it yet.
+	- no progress bars yet
+	- not enough epochs to get best performance from experience. OFI?
+	- not enough information in the run window to monitor progress
+	- doesn't appear to save checkpoint based on best epoch. OFI?
+	- doesn't appear to use the fast tokenizer, which is odd given how much huggingface write about the virtues of their fast tokenizers. OFI?
+	- config attention window = 512?
+	- padding?
+
+
+questions:
+	- I don't understand the inference program & can't submit my saved checkpoints on kaggle.
+	
+	- i don't understand how to ensemble yet.
+	
+	- are we maximizing f1 or minimizing loss?
+	
+	- I don't understand special tokens file, tockenizer config file & how to optimize the tokenizer
+	
+	- I don't understand why the current strategy saves so much. I wonder how hard it is to compare the json files?
+	
+	- the at_approach train file was so tight and concise, i feel like i should be aiming to achieve at least that degree of conciseness. Probably should be better than that as I'm relying so heavily on transformers and its other libraries which abstracts away so much of the boilerplate code.
+	
+	- that said, I'm still not 100% convinced that this degree of abstraction is a good thing for max performance. I feel like max performance requires a more "bare-metal" approach. as a related point, the developers for longformer were able to achieve better results than anyone else subsequently using that model because they were using a custom CUDA kernal. CUDA kernals are obviously written in C, so its nearly as bare metal as you can get. This seems to support the hypothesis that, for ultimate performance, you need to optimize the bare metal
+	
+	- I'm arguing against myself here. I don't have the skill yet to go for a bare mnetal approach. so while a higher level of abstraction may not deliver absolute best performance, it should be easier and faster for me to achieve this using high abstraction
+
+course chapter 1:
+	- can i use pipeline() and generator() in this code instead of the rather clunky preprocessing stuff?
+
+	- grouped_entities=True?
+
+
+
+corrective actions
+	- rename variables as required so they are clear and easy to understand
+	- write clear documentation for functions
+	- refactor to classes & methods where appropriate
+	- simplify the code. I think we can do the same thing with less complexity
+	- increased wandb monitoring
+	- wandb sweeps to optimize hyperparameters: learning rate, max_length, weight_decay, epsilon, delta, AdamW_beta, 
+	- recycle code from at_approach as required -> at_epoch_end, kfolds, 
+	- add tqdm progress bars
+	- add kfolds and increase epochs to 20. no early stopping callback
+	- change save strategy to save model weights for the best epoch per fold. print out the measure against which the epoch is being judged and whether or not the epoch weights being saved.
+
+
+things to investivate
+	- seq2seq trainer (HF)
+	- logging_straetgy
+	- save_strategy
+	- save_total_limit
+	- load_best_model_at_end
+	- metric_for_best_model
+	- hyperparametersearach: can use optuna, raytune, wandb
+	- training arguments
+	- 
+
+
