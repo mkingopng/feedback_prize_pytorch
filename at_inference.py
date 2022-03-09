@@ -10,16 +10,13 @@ import gc
 if __name__ == "__main__":
     df = pd.read_csv(os.path.join("data", "sample_submission.csv"))
     df_ids = df["id"].unique()
-
     tokenizer = AutoTokenizer.from_pretrained(Args1.model)
     test_samples = prepare_test_data(df, tokenizer, Args1)
     collate = Collate(tokenizer=tokenizer)
-
     raw_preds = []
     for fold_ in range(10):
         current_idx = 0
         test_dataset = FeedbackDataset(test_samples, Args1.max_len, tokenizer)
-
         if fold_ < 5:
             model = FeedbackModel(
                 model_name=Args1.model,  # need to change this in config depending on the checkpoints we want to test
@@ -30,13 +27,7 @@ if __name__ == "__main__":
             )
 
             model.load(os.path.join(Args1.tez_model, f"model_{fold_}.bin"), weights_only=True)
-
-            preds_iter = model.predict(
-                test_dataset,
-                batch_size=Args1.batch_size,
-                n_jobs=-1,
-                collate_fn=collate
-            )
+            preds_iter = model.predict(test_dataset, batch_size=Args1.batch_size, n_jobs=-1, collate_fn=collate)
 
         else:
             model = FeedbackModel(
@@ -47,18 +38,8 @@ if __name__ == "__main__":
                 steps_per_epoch=HyperParameters.STEPS  # this is just based on observation
             )
 
-            model.load(os.path.join(
-                Args2.tez_model,
-                f"model_{fold_ - 5}.bin"),
-                weights_only=True
-            )
-
-            preds_iter = model.predict(
-                test_dataset,
-                batch_size=Args2.batch_size,
-                n_jobs=-1,
-                collate_fn=collate
-            )
+            model.load(os.path.join(Args2.tez_model, f"model_{fold_ - 5}.bin"), weights_only=True)
+            preds_iter = model.predict(test_dataset, batch_size=Args2.batch_size, n_jobs=-1, collate_fn=collate)
 
         current_idx = 0
 
