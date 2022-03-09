@@ -22,11 +22,11 @@ if __name__ == "__main__":
 
         if fold_ < 5:
             model = FeedbackModel(
-                model_name=Args1.model,
+                model_name=Args1.model,  # need to change this in config depending on the checkpoints we want to test
                 num_labels=len(Targets.target_id_map) - 1,
                 learning_rate=HyperParameters.LR,
-                num_train_steps=1560,
-                steps_per_epoch=1560
+                num_train_steps=HyperParameters.STEPS,
+                steps_per_epoch=HyperParameters.STEPS
             )
 
             model.load(os.path.join(Args1.tez_model, f"model_{fold_}.bin"), weights_only=True)
@@ -40,11 +40,11 @@ if __name__ == "__main__":
 
         else:
             model = FeedbackModel(
-                model_name=Args2.model,
+                model_name=Args2.model,  # need to change this in config depending on the checkpoints we want to test
                 num_labels=len(Targets.target_id_map) - 1,
                 learning_rate=HyperParameters.LR,
-                num_train_steps=1560,  # this is just based on observation
-                steps_per_epoch=1560  # this is just based on observation
+                num_train_steps=HyperParameters.STEPS,  # this is just based on observation
+                steps_per_epoch=HyperParameters.STEPS  # this is just based on observation
             )
 
             model.load(os.path.join(

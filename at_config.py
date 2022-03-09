@@ -45,6 +45,7 @@ class HyperParameters:
     ACCUMULATION_STEPS = 1
     DELTA = 0.001
     PATIENCE = 5
+    STEPS = 1560
 
 
 class Targets:
@@ -95,16 +96,16 @@ class Args1:
     model = "longformer"  # change this to match the model used for training
     tez_model = "fblongformerlarge1536"  # change this to one of the other trained models to test
     output = "."
-    batch_size = 12
+    batch_size = 8
     max_len = 4096
 
 
 class Args2:
     input_path = "data"
-    model = "longformer-large-4056"  # change this to match the model used for training
+    model = "longformer"  # change this to match the model used for training
     tez_model = "tez-fb-large"  # change this to one of the other trained models to test
     output = "."
-    batch_size = 12
+    batch_size = 8
     max_len = 4096
 
 
