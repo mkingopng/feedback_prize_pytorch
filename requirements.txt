@@ -98,7 +98,7 @@ protobuf==3.19.4
     # via wandb
 psutil==5.9.0
     # via wandb
-pydantic==1.7.4
+pydantic==1.8.2
     # via
     #   spacy
     #   thinc
@@ -169,7 +169,7 @@ threadpoolctl==3.1.0
     # via scikit-learn
 tokenizers==0.11.6
     # via transformers
-torch==1.10.2
+torch==1.11.0
     # via feedback-prize (setup.py)
 tqdm==4.63.0
     # via
@@ -222,3 +222,4 @@ nlp~=0.4.0
 optuna~=2.10.0
 parameter~=0.0.3.dev2
 utils~=1.0.1
+torchensemble~=0.1.7
