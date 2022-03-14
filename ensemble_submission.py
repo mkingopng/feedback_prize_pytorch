@@ -12,7 +12,7 @@ step 5 submit predictions based on bayesian optimized average
 import optuna
 import gc
 
-from at_approach.at_functions import *
+from at_approach.at_functions import score_feedback_comp
 from at_approach.at_config import *
 
 
@@ -25,7 +25,10 @@ def loss_func(trial: optuna.trial.Trial):
 
     preds_ensembled = predict(**params)
 
-    kaggle_loss = kaggle_computation_score_func(df_truth, preds_ensembled)
+    kaggle_loss = score_feedback_comp(
+        pred_df=,
+        gt_df=,
+    )
     return kaggle_loss
 
 

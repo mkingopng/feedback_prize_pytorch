@@ -418,7 +418,7 @@ def ground_truth_for_validation(tokenized_val):
 
 # class Visualize:
 #     def __init__(self):
-#         self.visualize(df=, text=, colors=, train_df=)
+#         self.visualize(df=, text=, colors=, TRAIN_DF=)
 #         self.get_class(c=, index_to_label=)
 #         # self.pred2span(, visualize=)
 
