@@ -1,7 +1,7 @@
 import pandas as pd
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
-df = pd.read_csv("data/train.csv")
+df = pd.read_csv("../data/train.csv")
 dfx = pd.get_dummies(df, columns=["discourse_type"]).groupby(["id"], as_index=False).sum()
 cols = [c for c in dfx.columns if c.startswith("discourse_type_") or c == "id" and c != "discourse_type_num"]
 dfx = dfx[cols]

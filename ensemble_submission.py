@@ -12,8 +12,8 @@ step 5 submit predictions based on bayesian optimized average
 import optuna
 import gc
 
-from at_functions import *
-from at_config import *
+from at_approach.at_functions import *
+from at_approach.at_config import *
 
 
 def loss_func(trial: optuna.trial.Trial):

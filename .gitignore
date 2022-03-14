@@ -186,7 +186,6 @@ wandb_creds.py
 bigbird-base-hf/
 bigbird-robert-large-hf/
 eda-notebooks/
-/hugging_face_approach/
 /bigbird-roberta-large-hf/flasx_model.msgpack
 /bigbird-roberta-large-hf/pytorch_model.bin
 /bigbird-roberta-large-hf/README.md
@@ -197,13 +196,9 @@ eda-notebooks/
 /longformer-base-4096-hf-finetuned-ner/
 /longformer-base-4096-hf-1/
 /datasets/
-/hf_approach/wandb/
 /longformer-large-4096-hf-1/
 /longformer-large-4096-hf-finetuned-ner/
-/hf_approach/
 /an interesting ensemble approach/
 /curious_oath/
 /visionary_cherry/
 /2_train_folds.csv
-/visionary_cherry_0/
-/curious_oath_0/

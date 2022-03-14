@@ -8,7 +8,7 @@ from at_config import *
 import gc
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join("data", "sample_submission.csv"))
+    df = pd.read_csv(os.path.join("../data", "sample_submission.csv"))
     df_ids = df["id"].unique()
     tokenizer = AutoTokenizer.from_pretrained(Args1.model)
     test_samples = prepare_test_data(df, tokenizer, Args1)

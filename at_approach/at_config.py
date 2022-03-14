@@ -11,10 +11,10 @@ class Parameters:
     EXPERIMENT_NAME = f'feedback_prize_exp_{VER}'  # increment for each experiment
     MODEL_SAVENAME = f'longformer_{EXPERIMENT_NAME}'  # I've read bigbird gives 1-3% better performance. Consider.
     MODEL_NAME = 'longformer-base-4096-hf'  # this is longformer-base-4096
-    DATA_DIR = 'data'
+    DATA_DIR = '../data'
     LOAD_TOKENS_FROM = 'longformer-4096-hf'
     TRAIN_DF = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
-    FOLDS_DF = pd.read_csv('5_train_folds.csv')
+    FOLDS_DF = pd.read_csv('../5_train_folds.csv')
     pre_data_dir = os.path.join('preprocessed')  # what is this used for? Can't find it in the code. delete?
     MODEL_DIR = os.path.join(f'model/{EXPERIMENT_NAME}')
     OUTPUT_DIR = os.path.join(f'output/{EXPERIMENT_NAME}')
@@ -92,7 +92,7 @@ class Targets:
 
 
 class Args1:
-    input_path = "data"
+    input_path = "../data"
     model = "longformer"  # change this to match the model used for training
     tez_model = "visionary_cherry"  # change this to one of the other trained models to test
     output = "."
@@ -101,7 +101,7 @@ class Args1:
 
 
 class Args2:
-    input_path = "data"
+    input_path = "../data"
     model = "longformer"  # change this to match the model used for training
     tez_model = "curious_oath"  # change this to one of the other trained models to test
     output = "."
