@@ -1,0 +1,25 @@
+.
+├── input
+│   ├── feedback-prize-2021
+│   │   ├── train/
+│   │   ├── test/
+│   │   ├── sample_submission.csv
+│   │   └── train.csv
+│   ├── lsg-roberta-large
+│   │   ├── config.json
+│   │   ├── merges.txt
+│   │   ├── modeling.py
+│   │   ├── pytorch_model.bin
+│   │   ├── special_tokens_map.json
+│   │   ├── tokenizer.json
+│   │   ├── tokenizer_config.json
+│   │   └── vocab.json
+│   ├── deberta-v2-3-fast-tokenizer
+│   │   ├── convert_slow_tokenizer.py
+│   │   ├── deberta__init__.py
+│   │   ├── tokenization_auto.py
+│   │   ├── tokenization_deberta_v2.py
+│   │   ├── tokenization_deberta_v2_fast.py
+│   │   └── transformers__init__.py
+│   └── feedbackgroupshufflesplit1337
+│       └── groupshufflesplit_1337.p
