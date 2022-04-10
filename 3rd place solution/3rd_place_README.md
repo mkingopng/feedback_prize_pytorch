@@ -2,6 +2,14 @@
 
 Hello!
 
+Our inference notebook is public: 
+
+https://www.kaggle.com/code/aerdem4/xgb-lgb-feedback-prize-cv-0-7322/notebook 
+
+training code is public as well: 
+
+https://github.com/Shujun-He/3rd_Solution_Feedback_Prize_Evaluating_Student_Writing.
+
 Below you can find a outline of how to reproduce our solution for the Feedback-Prize-Evaluating-Student-Writing competition.
 If you run into any trouble with the setup/code or have any questions please contact me at shujun@tamu.edu
 
